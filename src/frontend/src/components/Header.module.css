@@ -1,0 +1,103 @@
+/* Sits on the ground, outside the panel: the world behind the menu. */
+
+.header {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin-bottom: var(--s2);
+}
+
+.wordmark {
+  /* The pixel face appears here and nowhere else. */
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 400;
+  color: var(--panel);
+  letter-spacing: 0.06em;
+}
+
+.games {
+  display: flex;
+  align-items: baseline;
+}
+
+.game {
+  padding: 2px 0;
+
+  /* Clearly legible, not greyed out. The inactive world is an option you can
+     take, not a disabled control, so it has to read as such — at 45% it looked
+     switched off rather than merely not-current. */
+  color: rgb(237 235 243 / 78%);
+  font-size: var(--text-xs);
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.game:hover {
+  color: var(--panel);
+}
+
+/*
+ * Amber already means "the one you are on" everywhere else on the page — the
+ * cursor, the caught count — so it means that here too.
+ *
+ * The weight change carries the state as well, so which world is current does
+ * not depend on telling amber from off-white.
+ */
+.game[aria-pressed='true'] {
+  color: var(--amber);
+  font-weight: 700;
+}
+
+.amp {
+  padding: 0 var(--s1);
+  color: rgb(237 235 243 / 45%);
+  font-size: var(--text-xs);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.count {
+  font-size: var(--text-lg);
+  font-variant-numeric: tabular-nums;
+}
+
+.done {
+  color: var(--amber);
+  font-weight: 700;
+}
+
+.total {
+  color: rgb(237 235 243 / 55%);
+  font-size: var(--text-md);
+}
+
+.sound {
+  align-self: center;
+  padding: 4px var(--s1);
+
+  color: var(--panel);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  box-shadow: inset 0 0 0 2px var(--ground-lift);
+
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--notch-sm)) 0,
+    100% var(--notch-sm),
+    100% 100%,
+    0 100%
+  );
+}
+
+.sound[aria-pressed='true'] {
+  background: var(--amber);
+  color: var(--ink);
+  box-shadow: none;
+}

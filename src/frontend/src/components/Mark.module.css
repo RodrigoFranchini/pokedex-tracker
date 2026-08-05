@@ -1,0 +1,43 @@
+/* The signature element: a notched square that snaps filled. */
+
+.mark {
+  width: 20px;
+  height: 20px;
+  flex: none;
+
+  /* Empty is an outline, filled is solid: the state difference is a shape
+     difference before it is a colour one, so it survives without colour. */
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--ink-soft);
+
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--notch-sm)) 0,
+    100% var(--notch-sm),
+    100% 100%,
+    0 100%
+  );
+}
+
+.filled {
+  background: var(--scarlet);
+  box-shadow: none;
+}
+
+/*
+ * Runs when the class lands, which only happens on a real toggle — already
+ * caught rows do not animate on page load because the class was there from
+ * the first paint.
+ */
+.flash {
+  animation: snap var(--snap);
+}
+
+@keyframes snap {
+  from {
+    transform: scale(0.6);
+  }
+  to {
+    transform: scale(1);
+  }
+}

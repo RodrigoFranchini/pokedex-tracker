@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#5c1622" />
+    <meta
+      name="description"
+      content="Track your Paldea Pokedex progress in Pokemon Scarlet and Violet."
+    />
+    <title>Paldea Dex — Pokedex Tracker</title>
+    <script>
+      // Applies the saved colour before the app mounts. Without this the page
+      // paints the default first and then snaps to the saved world, which
+      // reads as a bug rather than as a preference being restored.
+      //
+      // The fallback here must match DEFAULT_THEME in storage/progress.ts.
+      try {
+        var saved = JSON.parse(localStorage.getItem('pokedex-tracker') || '{}')
+        document.documentElement.dataset.theme =
+          saved && saved.settings && saved.settings.theme === 'violet' ? 'violet' : 'scarlet'
+      } catch (error) {
+        document.documentElement.dataset.theme = 'scarlet'
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

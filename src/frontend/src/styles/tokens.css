@@ -1,0 +1,100 @@
+/*
+ * Design tokens. The single source of truth for colour, space, and shape.
+ * Every value here is justified in prompts/phase1.md — change it there first.
+ */
+
+:root {
+  /* --- Colour -------------------------------------------------------------
+   * The game's colour is the world, not an accent: the list sits in a light
+   * panel on top of it, the way a GBA menu sits over the overworld.
+   *
+   * --ground and --ground-lift are the only themed values, set below. Because
+   * the panel is light in both themes, everything inside it — the mark, the
+   * ink, the type badges — stays fixed, so switching worlds cannot break the
+   * contrast of anything you actually read. */
+  --panel: #edebf3;
+  --ink: #221b33;
+  --ink-soft: #6e6685;
+  --scarlet: #e8323f;
+  --amber: #ffc94d;
+
+  /*
+   * A fixed violet for version marking. The ground's violet is themed and
+   * therefore cannot carry meaning — this one never moves, so scarlet and
+   * violet can mean "which game" on the light panel in either world.
+   */
+  --violet: #6b3fbf;
+
+  /* --- Space --------------------------------------------------------------
+   * An 8px grid, non-negotiable. Nothing sits off it. */
+  --s1: 8px;
+  --s2: 16px;
+  --s3: 24px;
+  --s4: 32px;
+  --s5: 48px;
+
+  /* --- Shape --------------------------------------------------------------
+   * One clipped corner, 8px at 45 degrees, on every surface. This is the whole
+   * aesthetic in one detail: it reads as native game UI without a pixel font
+   * or a texture. Nothing on this page has a border radius. */
+  --notch: 8px;
+  --notch-sm: 5px;
+  --frame: 3px;
+
+  /* --- Type ---------------------------------------------------------------
+   * Mono everywhere; the pixel face appears once, as the wordmark. */
+  --font-ui: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-display: 'Silkscreen', var(--font-ui);
+
+  --text-xs: 10px;
+  --text-sm: 12px;
+  --text-md: 14px;
+  --text-lg: 18px;
+
+  /* --- Motion -------------------------------------------------------------
+   * Quantised, not eased. The state change is where the retro feel lives. */
+  --snap: 80ms steps(4, end);
+
+  /* --- Pokemon types ------------------------------------------------------
+   * The 18-type convention belongs to the subject, not to any one game's UI. */
+  --type-normal: #9b9b7d;
+  --type-fire: #ed6f36;
+  --type-water: #5b8ad9;
+  --type-electric: #e5bf39;
+  --type-grass: #74c14f;
+  --type-ice: #82ccc4;
+  --type-fighting: #b8362c;
+  --type-poison: #9d4b9d;
+  --type-ground: #d3ab4f;
+  --type-flying: #8f9ee0;
+  --type-psychic: #ec5f8b;
+  --type-bug: #9aa825;
+  --type-rock: #b09f45;
+  --type-ghost: #6b558f;
+  --type-dragon: #6d43ee;
+  --type-dark: #6b564a;
+  --type-steel: #adadc4;
+  --type-fairy: #dc8fd1;
+}
+
+/* --- Worlds ---------------------------------------------------------------
+ * The two games give the page its two grounds. Both are taken down to roughly
+ * the same darkness so that panel text, the amber cursor, and the legend hold
+ * the same contrast in either world — switching changes the mood, never the
+ * legibility.
+ *
+ * The attribute is written by an inline script in index.html before the app
+ * mounts, so a saved choice never flashes the wrong world first.
+ */
+/* Scarlet is the default world, so the bare :root carries it. Anyone who has
+   chosen violet keeps violet — the stored value always wins over this. */
+:root,
+:root[data-theme='scarlet'] {
+  --ground: #5c1622;
+  --ground-lift: #822132;
+}
+
+:root[data-theme='violet'] {
+  --ground: #33265c;
+  --ground-lift: #4a3a7d;
+}

@@ -1,0 +1,133 @@
+.row {
+  display: grid;
+  grid-template-columns: 16px 44px 56px 1fr 20px;
+  align-items: center;
+  gap: var(--s2);
+
+  width: 100%;
+  /* 56px, still on the 8px grid. The source sprites carry their own padding,
+     so at 48 the creature itself was reading as about 30px and getting lost. */
+  height: 56px;
+  padding: 0 var(--s2);
+
+  text-align: left;
+  border-bottom: 1px solid rgb(34 27 51 / 8%);
+}
+
+/*
+ * The active row is driven by the app's cursor state, never by :focus-visible.
+ * The browser suppresses :focus-visible after a mouse click, so a cursor built
+ * on it vanishes the moment you click a row — and then arrow keys move an
+ * invisible selection and Enter marks a row you cannot see.
+ *
+ * The band and the arrow together replace the default outline: one indicator
+ * for one concept, and the arrow carries the state without relying on colour.
+ */
+.active {
+  background: rgb(255 201 77 / 30%);
+}
+
+.row:focus-visible {
+  outline: none;
+}
+
+.row:hover {
+  background: rgb(34 27 51 / 5%);
+}
+
+/* Hover on some other row must not outrank where the cursor actually is. */
+.active:hover {
+  background: rgb(255 201 77 / 38%);
+}
+
+/*
+ * Exactly one arrow is on screen at any time, and it is always on the row that
+ * Enter will mark. There is always a cursor, the way a game menu always has
+ * one.
+ *
+ * Hover deliberately does *not* draw an arrow. It used to, which meant a mouse
+ * resting anywhere put a second arrow on a row the keyboard was not on — two
+ * cursors, and no way to tell which one Enter would act on. Hover gets a
+ * background instead: enough feedback to show the click target, not enough to
+ * be mistaken for the selection.
+ */
+.cursor {
+  color: var(--ink);
+  visibility: hidden;
+}
+
+.active .cursor {
+  visibility: visible;
+}
+
+.number {
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.sprite {
+  width: 56px;
+  height: 56px;
+  image-rendering: pixelated;
+}
+
+.stack {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+.name {
+  font-size: var(--text-md);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.types {
+  display: flex;
+  flex: none;
+  gap: var(--s1);
+}
+
+/*
+ * Caught rows recede. The page's job is showing what is still missing, so the
+ * bright rows should be the ones with work left. See prompts/phase1.md.
+ */
+.caught .name {
+  color: var(--ink-soft);
+}
+
+.caught .sprite {
+  filter: grayscale(1);
+  opacity: 0.4;
+}
+
+.caught .types {
+  opacity: 0.45;
+}
+
+@media (width < 620px) {
+  .row {
+    grid-template-columns: 12px 36px 40px 1fr 20px;
+    height: 64px;
+    gap: var(--s1);
+    padding: 0 var(--s1);
+  }
+
+  .sprite {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* Types move under the name; the mark column never collapses. */
+  .stack {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 3px;
+  }
+}

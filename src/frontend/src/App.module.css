@@ -1,0 +1,56 @@
+.page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--s3) var(--s2) var(--s5);
+}
+
+/*
+ * The frame is a solid block the panel sits inside, which is how you get a
+ * hard border that follows the notch. A CSS border would square the corner off.
+ */
+.frame {
+  background: var(--ink);
+  padding: var(--frame);
+  margin-top: var(--s2);
+
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--notch)) 0,
+    100% var(--notch),
+    100% 100%,
+    0 100%
+  );
+}
+
+.panel {
+  background: var(--panel);
+
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--notch)) 0,
+    100% var(--notch),
+    100% 100%,
+    0 100%
+  );
+}
+
+/*
+ * A button legend, the way a handheld puts its controls along the bottom edge.
+ * It is the honest place to teach the keyboard shortcuts, and it earns its
+ * space because this list is meant to be worked through without a mouse.
+ */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin-top: var(--s2);
+  color: rgb(237 235 243 / 60%);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.legend b {
+  color: var(--amber);
+  font-weight: 700;
+}

@@ -1,0 +1,58 @@
+/*
+ * 400 segments, one per entry, rather than a percentage bar. It shows the
+ * *shape* of your progress — you can see gaps cluster in the 200s — and a
+ * single bar cannot.
+ */
+
+.meter {
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+
+  width: 100%;
+  height: 14px;
+  padding: 0;
+
+  background: var(--ground-lift);
+  cursor: pointer;
+
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--notch-sm)) 0,
+    100% var(--notch-sm),
+    100% 100%,
+    0 100%
+  );
+}
+
+.segment {
+  background: transparent;
+}
+
+/*
+ * Amber, not scarlet. The meter is the one element that sits directly on the
+ * ground, so a scarlet fill would disappear into its own track in the scarlet
+ * world. Amber holds against both, and it already means "your progress" here —
+ * it is the colour of the caught count in the header.
+ */
+.filled {
+  background: var(--amber);
+}
+
+/*
+ * A marker every 50 entries. Without them the meter reads as a bar; with them
+ * you can find roughly where #250 is, which is what makes it navigable.
+ */
+.ticks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* Neutral rather than a violet literal, so the markers read the same in
+     either world. */
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 calc(12.5% - 1px),
+    rgb(0 0 0 / 40%) calc(12.5% - 1px) 12.5%
+  );
+}

@@ -1,0 +1,22 @@
+.badge {
+  display: inline-block;
+  min-width: 64px;
+  padding: 2px var(--s1);
+
+  background: var(--type-colour, var(--ink-soft));
+  color: #fff;
+
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--notch-sm)) 0,
+    100% var(--notch-sm),
+    100% 100%,
+    0 100%
+  );
+}
