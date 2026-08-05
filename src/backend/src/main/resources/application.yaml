@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: pokedex-tracker
+
+  jpa:
+    hibernate:
+      # Flyway owns the schema, exclusively. If Hibernate also generates DDL the
+      # two disagree silently and the migration history stops describing reality.
+      ddl-auto: validate
+    # Boot defaults this on. It holds a database session open for the whole
+    # request so lazy loading works from a controller -- convenient, and a
+    # well-known way to leak connections under load. Off from the start.
+    open-in-view: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # Health only. The default set is small, but Actuator can expose
+        # environment and configuration, so widen it deliberately or not at all.
+        include: health
