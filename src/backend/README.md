@@ -39,16 +39,15 @@ sleeping server is invisible to someone using the app.
 
 ## 2. Status
 
-Registration, login, logout and the current-user endpoint work end to end.
-Progress storage — the reason the service exists — is not built yet.
+All six endpoints work end to end. What is left is putting it somewhere the
+front end can reach.
 
 | Piece | State |
 | --- | --- |
 | Skeleton, Postgres, Flyway, health | Done |
 | Users: register, login, logout, `/api/me` | Done |
-| Progress: `GET` and `PUT` | **Not started** |
+| Progress: `GET` and `PUT` | Done |
 | Deployment (Render + Neon) | Not started |
-| Tests | Only the generated skeleton |
 | Front-end sync | Not started |
 
 Build order, deliberately: users → progress → **deploy** → front end. Deploying
@@ -74,7 +73,6 @@ any pending migrations. Stopping the app stops the container but keeps its data.
 | Command | What it does |
 | --- | --- |
 | `./mvnw spring-boot:run` | Run the app, starting Postgres with it |
-| `./mvnw test` | Run tests (Testcontainers, real Postgres) |
 | `./mvnw package` | Build the jar |
 | `docker compose down -v` | Wipe the database and start clean |
 
@@ -115,16 +113,14 @@ Two settings in `application.yaml` are load-bearing rather than preference:
 
 ## 4. API
 
-All six planned endpoints are listed; the two progress ones do not exist yet.
-
 | Method | Path | Auth | Purpose |
 | --- | --- | --- | --- |
 | `POST` | `/api/auth/register` | — | Create an account, and sign in |
 | `POST` | `/api/auth/login` | — | Sign in |
 | `POST` | `/api/auth/logout` | — | Clear the cookie |
 | `GET` | `/api/me` | cookie | The current user |
-| `GET` | `/api/progress/{game}/{dex}` | cookie | **Not built** — the caught list |
-| `PUT` | `/api/progress/{game}/{dex}` | cookie | **Not built** — replaces the caught list |
+| `GET` | `/api/progress/{game}/{dex}` | cookie | The caught list |
+| `PUT` | `/api/progress/{game}/{dex}` | cookie | Replaces the caught list |
 | `GET` | `/actuator/health` | — | Includes the datasource, so `UP` means the database is reachable |
 
 ```bash
@@ -140,7 +136,24 @@ curl -i -c jar.txt -X POST localhost:8080/api/auth/login \
 
 # current user — 200 with the cookie, 401 without
 curl -b jar.txt localhost:8080/api/me
+
+# progress — the whole caught list, replaced wholesale
+curl -b jar.txt -X PUT localhost:8080/api/progress/scarlet-violet/paldea \
+  -H 'Content-Type: application/json' \
+  -d '{"caught":[906,907,909]}'
+
+curl -b jar.txt localhost:8080/api/progress/scarlet-violet/paldea
 ```
+
+**The user is never named in a URL.** Both progress endpoints take the account
+from the cookie, so there is no ownership check to write and no way to ask for
+someone else's data. `/api/progress/{userId}/...` would need that check on every
+request, and forgetting it once exposes everyone.
+
+A dex nobody has saved yet answers `200` with an empty list rather than `404` —
+having caught nothing is not a missing resource, and the front end should not
+have to treat first use as an error. An unrecognised `(game, dex)` pair *is* a
+`404`; without that check any string in the URL would create a row.
 
 Every error, whatever produced it, comes back in the same shape:
 
@@ -152,6 +165,7 @@ Every error, whatever produced it, comes back in the same shape:
 | --- | --- |
 | `400` | Validation failed — field messages joined into one sentence |
 | `401` | Bad credentials, or no valid cookie on a protected endpoint |
+| `404` | Unrecognised `(game, dex)` pair |
 | `409` | Email already registered |
 
 Consistency here is deliberate. Spring's default validation error is a large
@@ -233,7 +247,7 @@ Four choices in those four columns:
 - **`text`, not `varchar(n)`.** Identical in Postgres; a length limit is worth
   adding only when it is a real rule.
 
-### Planned: `dex_progress`
+### `dex_progress`
 
 ```sql
 dex_progress
@@ -256,6 +270,26 @@ costs nothing today.
 **National dex numbers, never regional ones.** Regional entry numbers are not
 stable identity — Paldea #1 and Galar #1 are different Pokemon. Shiny tracking,
 if it ever happens, is a second `integer[]` column, not a rewrite.
+
+The list is **sorted and de-duplicated** before it is stored, so the value in the
+database is canonical however the client assembled it.
+
+Two things about the entity are unlike `User`:
+
+- **`@EmbeddedId`, and `DexProgressId` implements `Serializable`.** The JPA spec
+  requires that of composite key classes — this is the one place that interface
+  is not cargo cult. It needs `equals` and `hashCode` too, since Hibernate uses
+  the key object itself for identity.
+- **No `@ManyToOne` to `User`.** The key holds a plain `UUID`. Mapping the
+  foreign key *and* an association needs `@MapsId` and brings lazy proxies with
+  it, for a navigation nothing performs.
+
+`caught` maps to Postgres's native `integer[]` via `@JdbcTypeCode(SqlTypes.ARRAY)`
+on an `int[]` field.
+
+Recognised `(game, dex)` pairs are an allowlist in `ProgressServiceImpl`.
+Adding a game is one entry there plus nothing else — the schema already keys by
+game and dex.
 
 ### Migrations
 
@@ -382,20 +416,28 @@ src/main/java/com/rodrigofranchini/pokedextracker/
                   AuthCookieFactory         the only place cookie flags are set
   controllers/    AuthController            register, login, logout
                   UserController            /api/me
+                  ProgressController        /api/progress/{game}/{dex}
   dtos/           RegisterRequest           validated, trims the email
                   LoginRequest
                   UserResponse              id and email only
+                  ProgressRequest           the whole caught list
+                  ProgressResponse
                   ErrorResponse
   entities/       User
+                  DexProgress
+                  DexProgressId             composite key, Serializable
   exceptions/     GlobalExceptionHandler    exception -> HTTP status
                   EmailAlreadyRegisteredException
                   InvalidCredentialsException
+                  UnknownDexException
   repositories/   UserRepository
-  services/       UserService, JwtService   interfaces
-    impl/         UserServiceImpl, JwtServiceImpl
+                  DexProgressRepository
+  services/       UserService, JwtService, ProgressService    interfaces
+    impl/         UserServiceImpl, JwtServiceImpl, ProgressServiceImpl
 src/main/resources/
   application.yaml
   db/migration/   V1__create_users_table.sql
+                  V2__create_dex_progress_table.sql
 compose.yaml                                local Postgres
 ```
 
@@ -410,9 +452,9 @@ the first. Incoming DTOs also prevent a client from setting fields it should not
 own, such as `id` or `createdAt`.
 
 **Services throw plain Java exceptions.** Nothing below `controllers/` knows
-HTTP exists, which is what keeps the service layer callable from a test or a
-CLI. `GlobalExceptionHandler` is the single place exceptions become status
-codes.
+HTTP exists, which is what keeps the service layer callable from anywhere, not
+only a controller. `GlobalExceptionHandler` is the single place exceptions
+become status codes.
 
 ---
 
@@ -426,24 +468,18 @@ codes.
 | Migrations | **Flyway** | Schema in version control from the first commit |
 | Auth | **JJWT 0.12**, **bcrypt** | Slow and salted by design; never store a plaintext password |
 | Health | **Actuator** | Render wants a health endpoint anyway |
-| Tests | **JUnit 5 + Testcontainers** | Integration tests against real Postgres |
 
 **Not included:** no Redis, no queue, no message broker, no Lombok, no MapStruct.
 Two tables and six endpoints do not need them.
 
 **On Spring Boot 4:** it renamed things you will otherwise search for and not
-find. `spring-boot-starter-webmvc`, not `-web`, and test dependencies are
-per-starter (`spring-boot-starter-webmvc-test`) rather than one
-`spring-boot-starter-test`. Spring Security 7 also changed enough that most Boot
-3 answers online need adapting.
+find — `spring-boot-starter-webmvc`, not `-web`. Spring Security 7 also changed
+enough that most Boot 3 answers online need adapting.
 
 ---
 
 ## 12. Not built yet
 
-- **Progress endpoints**, and the `dex_progress` table (§6).
-- **Tests.** Only the generated skeleton exists. Testcontainers is wired and
-  `@ServiceConnection` makes real-Postgres integration tests cheap.
 - **Deployment** to Render and Neon, with the Vercel rewrite (§8).
 - **Front-end sync** — swapping `storage/progress.ts` for an API-backed version
   with the union-on-login from §7.

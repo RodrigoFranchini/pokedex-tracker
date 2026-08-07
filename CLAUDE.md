@@ -9,7 +9,7 @@ second.
 | Part | State |
 |---|---|
 | **Front end** (`src/frontend`) | **Built and working.** Vite + React + TypeScript. |
-| **Back end** (`src/backend`) | **In progress.** Spring Boot + Postgres. Auth done; progress endpoints not started. |
+| **Back end** (`src/backend`) | **In progress.** Spring Boot + Postgres. All six endpoints work; not deployed. |
 
 The front end is complete and runs with **no server at all** — progress lives in
 `localStorage` and the dex data ships in the bundle. The back end is an
@@ -45,7 +45,6 @@ From `src/backend` (needs JDK 21 and Docker running):
 
 ```bash
 ./mvnw spring-boot:run   # starts Postgres via compose.yaml, then the app
-./mvnw test              # Testcontainers, real Postgres
 docker compose down -v   # wipe the database, replay migrations from V1
 ```
 
