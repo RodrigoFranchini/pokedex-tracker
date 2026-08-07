@@ -19,3 +19,4 @@ management:
         # Health only. The default set is small, but Actuator can expose
         # environment and configuration, so widen it deliberately or not at all.
         include: health
+
