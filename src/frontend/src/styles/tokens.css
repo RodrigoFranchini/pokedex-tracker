@@ -1,6 +1,6 @@
 /*
  * Design tokens. The single source of truth for colour, space, and shape.
- * Every value here is justified in prompts/phase1.md — change it there first.
+ * The constraints these values encode are set out in src/frontend/README.md.
  */
 
 :root {
