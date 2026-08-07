@@ -6,7 +6,7 @@
  *
  * The Paldea list was finalised at the game's release and does not change, so
  * this output is committed and the app never talks to PokeAPI at runtime.
- * See prompts/context.md.
+ * See src/frontend/README.md.
  */
 
 import { writeFile } from 'node:fs/promises'
@@ -23,7 +23,7 @@ const CONCURRENCY = 8
  * A species' *default* variety is not always the one that appears in Paldea:
  * default Wooper is Water/Ground (Johto) while Paldean Wooper is Poison/Ground,
  * and default Tauros is Normal while Paldean Tauros is Fighting. Preferring a
- * regional variety when one exists fixes both. See prompts/context.md.
+ * regional variety when one exists fixes both. See src/frontend/README.md.
  */
 const REGIONAL_VARIETY_MARKER = '-paldea'
 

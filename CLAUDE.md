@@ -9,7 +9,7 @@ second.
 | Part | State |
 |---|---|
 | **Front end** (`src/frontend`) | **Built and working.** Vite + React + TypeScript. |
-| **Back end** (`src/backend`) | **Not started.** Planned in `prompts/backend.md`. |
+| **Back end** (`src/backend`) | **In progress.** Spring Boot + Postgres. Auth done; progress endpoints not started. |
 
 The front end is complete and runs with **no server at all** — progress lives in
 `localStorage` and the dex data ships in the bundle. The back end is an
@@ -17,28 +17,36 @@ addition, not a prerequisite. Nothing is broken without it.
 
 ## Documentation
 
-Read these before making changes. They explain *why* things are the way they
-are, and most of the surprising decisions have a reason recorded.
+Read the README for whichever half you are changing before changing it. Each is
+the single source of truth for its own side, and both record *why* rather than
+just what.
 
 | File | Authoritative for |
 |---|---|
-| `prompts/phase1.md` | The front end: design direction, structure, behaviour. **Built — it is both plan and record.** |
-| `prompts/backend.md` | The server: scope, stack, schema, deployment. **Not built — this is a plan.** |
-| `prompts/context.md` | Product goals, roadmap, the PokéAPI data source and its traps. |
+| `src/backend/README.md` | The server: scope, auth, schema, sync design, deployment, what is left. |
+| `src/frontend/README.md` | The front end: how to run it, the dex data, the two seams. |
 
-**On `context.md`:** it is the opening brief, written before anything was built.
-It is kept current where it matters, but where it disagrees with `phase1.md` or
-`backend.md`, **those win** — they describe real code and current decisions.
+There is no separate planning document. An earlier `prompts/` directory held
+one, and it drifted out of agreement with the code — the READMEs replaced it so
+that there is only one place to be wrong.
 
 ## Commands
 
-All from `src/frontend`:
+From `src/frontend`:
 
 ```bash
 npm run dev            # dev server
 npm run build          # typecheck + production build
 npm run lint           # oxlint
 npm run generate:dex   # regenerate src/data/paldea.ts from PokeAPI (by hand only)
+```
+
+From `src/backend` (needs JDK 21 and Docker running):
+
+```bash
+./mvnw spring-boot:run   # starts Postgres via compose.yaml, then the app
+./mvnw test              # Testcontainers, real Postgres
+docker compose down -v   # wipe the database, replay migrations from V1
 ```
 
 ## Decisions that are settled
@@ -55,7 +63,7 @@ Do not undo these without being asked. Each cost something to arrive at.
 - **`src/lib/sprites.ts` is the only place a sprite URL is built.** The data
   file stores a numeric `spriteId` and no URLs.
 - **No component library, no state manager, no CSS framework.** Plain CSS with
-  custom properties and CSS Modules. This is deliberate; see `phase1.md`.
+  custom properties and CSS Modules. This is deliberate.
 - **Progress is stored as a sparse list of national dex numbers**, keyed by
   game then dex. Not the regional number — those are not stable across games.
 
@@ -80,7 +88,7 @@ Documented so they are not rediscovered the hard way.
 
 - Comments explain *why*, not *what*. Existing comments are a good guide to the
   expected density and tone — match them.
-- Doc references in code name the file only (`prompts/phase1.md`), never a
+- Doc references in code name the file only (`src/backend/README.md`), never a
   section number. Numbers drift; names do not.
 - British/neutral spelling in prose is fine; code identifiers are American
   (`color` in CSS, `colour` acceptable in comments).

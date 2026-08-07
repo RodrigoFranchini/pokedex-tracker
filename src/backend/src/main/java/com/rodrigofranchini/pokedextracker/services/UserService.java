@@ -6,4 +6,6 @@ public interface UserService {
 
     User register(String email, String password);
 
+    User authenticate(String email, String password);
+
 }

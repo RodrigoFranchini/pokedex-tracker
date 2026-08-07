@@ -20,3 +20,13 @@ management:
         # environment and configuration, so widen it deliberately or not at all.
         include: health
 
+app:
+  auth:
+    # Dev fallback only. Production sets JWT_SECRET, and rotating it logs
+    # everyone out, which is the intended way to revoke every session.
+    jwt-secret: ${JWT_SECRET:local-development-secret-not-for-production-use-min-32-bytes}
+    token-expiry: 7d
+    # Secure cookies are not sent over plain http, so local dev would never
+    # receive one. Production sets this true.
+    cookie-secure: ${COOKIE_SECURE:false}
+

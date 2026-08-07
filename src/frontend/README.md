@@ -7,9 +7,9 @@ Runs entirely in the browser. No server, no accounts, no network calls at
 runtime — the dex data ships with the bundle and caught state lives in
 `localStorage`.
 
-Product context is in [`../../prompts/context.md`](../../prompts/context.md); the design and
-implementation plan this was built from is in
-[`../../prompts/phase1.md`](../../prompts/phase1.md).
+The server that adds accounts is documented in
+[`../backend/README.md`](../backend/README.md). It is optional — this app does
+not need it to work.
 
 ## Running it
 

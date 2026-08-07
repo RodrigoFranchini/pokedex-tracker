@@ -2,6 +2,7 @@ package com.rodrigofranchini.pokedextracker.services.impl;
 
 import com.rodrigofranchini.pokedextracker.entities.User;
 import com.rodrigofranchini.pokedextracker.exceptions.EmailAlreadyRegisteredException;
+import com.rodrigofranchini.pokedextracker.exceptions.InvalidCredentialsException;
 import com.rodrigofranchini.pokedextracker.repositories.UserRepository;
 import com.rodrigofranchini.pokedextracker.services.UserService;
 
@@ -35,6 +36,18 @@ public class UserServiceImpl implements UserService {
     }
 
     // NormalizeMail (rm blank spaces + toLowerCase)
+    @Transactional(readOnly = true)
+    @Override
+    public User authenticate(String email, String password) {
+        User user = userRepository.findByEmail(normalizeEmail(email))
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
+
+        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+            throw new InvalidCredentialsException("Invalid email or password");
+        }
+        return user;
+    }
+
     private String normalizeEmail(String email){
         return email.trim().toLowerCase();
     }
