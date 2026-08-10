@@ -93,13 +93,21 @@ one command instead of unpicking a Homebrew service.
 
 ### Configuration
 
-Two environment variables, both with development fallbacks so nothing secret is
-committed.
+This table is the only list of them — there is no `.env` template, because Spring
+Boot does not read `.env` files and a second list would drift from this one.
+
+Development needs none of these. `spring-boot-docker-compose` supplies the
+datasource and the other two have fallbacks, so nothing secret is committed.
+Production sets all five, as Render environment variables; a local container
+takes them as shell exports.
 
 | Variable | Default | Notes |
 | --- | --- | --- |
-| `JWT_SECRET` | a local dev string | Must be at least 32 bytes. Changing it invalidates every session at once, which is the only global revocation this design has. |
+| `JWT_SECRET` | a local dev string | At least 48 bytes: tokens are signed HS384, and a shorter key is rejected outright. Changing it invalidates every session at once, which is the only global revocation this design has. |
 | `COOKIE_SECURE` | `false` | Must be `true` in production. Browsers will not send a `Secure` cookie over plain HTTP, so leaving it on locally means never receiving one. |
+| `SPRING_DATASOURCE_URL` | from compose | Production only. `jdbc:` prefixed, unlike the string Neon hands you. |
+| `SPRING_DATASOURCE_USERNAME` | from compose | Production only. |
+| `SPRING_DATASOURCE_PASSWORD` | from compose | Production only. |
 
 Two settings in `application.yaml` are load-bearing rather than preference:
 
