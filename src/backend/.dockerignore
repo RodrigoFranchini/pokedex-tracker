@@ -1,0 +1,18 @@
+# Everything here is either rebuilt inside the image or has no business in it.
+target/
+src/test/
+
+# The image builds with the maven base image's mvn, not the wrapper.
+.mvn/
+mvnw
+mvnw.cmd
+
+# Keeping this out means spring-boot-docker-compose cannot find a file to act on.
+compose.yaml
+
+.idea/
+.git/
+.gitignore
+.gitattributes
+HELP.md
+README.md

@@ -1,3 +1,7 @@
+server:
+  # The host assigns the port in production. 8080 keeps local runs unchanged.
+  port: ${PORT:8080}
+
 spring:
   application:
     name: pokedex-tracker
