@@ -47,7 +47,9 @@ front end can reach.
 | Skeleton, Postgres, Flyway, health | Done |
 | Users: register, login, logout, `/api/me` | Done |
 | Progress: `GET` and `PUT` | Done |
-| Deployment (Render + Neon) | Not started |
+| Database on Neon | Done |
+| Container, verified against Neon | Done |
+| Deployment to Render, and the Vercel proxy | In progress |
 | Front-end sync | Not started |
 
 Build order, deliberately: users → progress → **deploy** → front end. Deploying
@@ -335,26 +337,68 @@ become an API client. One file changes.
 
 ---
 
-## 8. Deployment (planned)
+## 8. Deployment
 
 | Piece | Host | Notes |
 | --- | --- | --- |
 | Front end | **Vercel** | Static build, and proxies `/api/*` to Render |
-| Back end | **Render** | Free web service, reached through the proxy |
-| Database | **Neon** | Free tier, autosuspends when idle, wakes quickly |
+| Back end | **Render** | Free web service, built from `Dockerfile`, Ohio |
+| Database | **Neon** | Free plan, Postgres 16, Ohio (`aws-us-east-2`) |
 
-Free-tier terms move around. Confirm the current ones when signing up rather
-than trusting this document.
+Free-tier terms move around. These were confirmed in August 2026.
+
+**Both in Ohio, not São Paulo, despite being written in Brazil.** The browser
+makes one round trip per API call; the app makes several to the database per
+request. Co-locating the app and the database beats putting either one near the
+user. Neon does offer `aws-sa-east-1`, but Render has no South America region,
+so the app is crossing the equator regardless and the database follows it.
 
 **The Vercel rewrite is what makes the auth design work.** With `/api/*` proxied
 to Render, the browser only ever talks to one origin, so the cookie is
 first-party (`SameSite=Lax` just works, including in Safari), there is **no CORS
 at all**, and no custom domain is needed.
 
-**Neon rather than Render's own Postgres**, because Render's *free* databases
-have historically been deleted after a fixed window. For something meant to sit
-at the end of a CV link for a year, a database with an expiry date is a
-landmine. Neon scales to zero and wakes in well under a second.
+**Neon rather than Render's own Postgres.** Render's free databases are deleted
+30 days after creation, plus a 14-day grace period to upgrade. For something
+meant to sit at the end of a CV link for a year, a database with an expiry date
+is a landmine. Neon's free plan has no expiry: 0.5 GB of storage, 100 CU-hours a
+month, scales to zero after five minutes and wakes in well under a second.
+
+One unknown, recorded rather than resolved: Neon's docs mention free projects
+inactive for 90 days being subject to deletion, in a passage about deprecated
+Azure regions. Whether it applies generally is unclear. The front end's warm-up
+ping incidentally guards against it.
+
+### Build
+
+A `Dockerfile` in `src/backend`, not a platform-native Java build, because it is
+what makes the host replaceable — the same image runs anywhere, so changing
+platform is a URL change rather than a new pipeline.
+
+Multi-stage: Maven 3.9.16 on JDK 21 compiles, an Alpine JRE runs. Only the jar
+crosses between them. The Maven version matches the one
+`.mvn/wrapper/maven-wrapper.properties` pins — bump both together or local and
+production builds stop agreeing.
+
+Tests are skipped in the image. The suite is Testcontainers-based and there is
+no Docker daemon inside a Docker build.
+
+`server.port` binds `${PORT:8080}` so the host can assign the port. That is the
+only source change the whole deployment required.
+
+Three JVM flags in the `ENTRYPOINT`, none of them preference:
+
+- **`-XX:MaxRAMPercentage=65`** — the heap is not all a JVM uses; metaspace,
+  thread stacks and the code cache sit outside it. Exceeding a container's
+  memory limit is a kernel kill, not an `OutOfMemoryError`, so it presents as a
+  restart loop with no stack trace.
+- **`-XX:+UseSerialGC`** — G1's background threads cost memory and contend for a
+  CPU there is only a fraction of.
+- **`-XX:TieredStopAtLevel=1`** — C1 only. Gives up peak throughput, which this
+  traffic never needs, for markedly less CPU spent compiling during startup.
+
+Verified locally against Neon under `--memory=512m`: 263 MB resident (51% of the
+limit), Flyway applying both migrations, all six endpoints, startup 21s.
 
 ### The cold start, and where it actually hurts
 
