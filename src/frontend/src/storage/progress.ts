@@ -1,11 +1,14 @@
 /**
- * The only module in the app that touches localStorage.
+ * The only module in the app that touches localStorage, and now the only one
+ * that mirrors progress to the server.
  *
- * This is the seam that becomes an API client when the back end arrives.
- * Nothing above it should know where progress lives, so the exported functions
- * are deliberately shaped like something a server could back instead.
+ * The device is the source of truth. Storage is written first and always, an
+ * account only adds a copy elsewhere, and every server call in here is best
+ * effort: nothing above this module can tell whether one succeeded, because
+ * nothing above it should have to.
  */
 
+import * as api from '../lib/api'
 import type { DexId, GameId, Theme } from '../types'
 
 const STORAGE_KEY = 'pokedex-tracker'
@@ -18,6 +21,13 @@ const SCHEMA_VERSION = 1
 
 /** Toggling a run of entries should not mean a write per entry. */
 const WRITE_DEBOUNCE_MS = 300
+
+/**
+ * Longer than the storage debounce, because the costs are not comparable: a
+ * localStorage write is free and a round trip to Ohio is not. Working through a
+ * run of entries should send one request, not one per pause for breath.
+ */
+const PUSH_DEBOUNCE_MS = 2000
 
 type DexProgress = {
   /**
@@ -153,13 +163,65 @@ function schedulePersist(): void {
   pendingWrite = setTimeout(persist, WRITE_DEBOUNCE_MS)
 }
 
+/**
+ * Whether there is an account to mirror to. Progress is written locally either
+ * way — signing out drops the copy, never the dex.
+ */
+let signedIn = false
+
+/** Dexes changed since the last push. The whole list is sent, never a delta. */
+const unpushed = new Map<string, { game: GameId; dex: DexId }>()
+
+let pendingPush: ReturnType<typeof setTimeout> | undefined
+
+function push(keepalive = false): void {
+  clearTimeout(pendingPush)
+  pendingPush = undefined
+
+  for (const { game, dex } of unpushed.values()) {
+    const caught = state().progress[game]?.[dex]?.caught ?? []
+    // Best effort, and deliberately unreported. The device's copy is the truth,
+    // and every push sends the whole list, so a failed one is superseded by the
+    // next change and repaired by the union on the next merge.
+    void api.putProgress(game, dex, caught, keepalive).catch(() => {})
+  }
+
+  unpushed.clear()
+}
+
+function queuePush(game: GameId, dex: DexId): void {
+  if (!signedIn) return
+  unpushed.set(`${game}/${dex}`, { game, dex })
+  clearTimeout(pendingPush)
+  pendingPush = setTimeout(push, PUSH_DEBOUNCE_MS)
+}
+
 if (typeof window !== 'undefined') {
   // Without this, closing the tab within the debounce window loses the last
   // toggle. pagehide fires on close, navigation, and mobile backgrounding,
   // which is the case that actually bites.
   window.addEventListener('pagehide', () => {
     if (pendingWrite !== undefined) persist()
+    // keepalive is what lets the request outlive the page. A normal fetch is
+    // cancelled on unload, so the server would miss the last few marks until
+    // something else triggered a merge.
+    if (pendingPush !== undefined) push(true)
   })
+}
+
+/**
+ * Called when the account changes, including to nobody.
+ *
+ * Signing out cancels a pending push and leaves local progress untouched:
+ * logging out must not look anything like losing your dex.
+ */
+export function setSignedIn(value: boolean): void {
+  signedIn = value
+  if (signedIn) return
+
+  clearTimeout(pendingPush)
+  pendingPush = undefined
+  unpushed.clear()
 }
 
 /** Caught national dex numbers for one dex, as a set for O(1) lookups. */
@@ -167,7 +229,7 @@ export function loadCaught(game: GameId, dex: DexId): Set<number> {
   return new Set(state().progress[game]?.[dex]?.caught ?? [])
 }
 
-export function saveCaught(game: GameId, dex: DexId, caught: Set<number>): void {
+function writeCaught(game: GameId, dex: DexId, caught: Set<number>): void {
   const current = state()
   current.progress[game] ??= {}
   current.progress[game][dex] = {
@@ -176,6 +238,38 @@ export function saveCaught(game: GameId, dex: DexId, caught: Set<number>): void 
     updatedAt: new Date().toISOString(),
   }
   schedulePersist()
+}
+
+export function saveCaught(game: GameId, dex: DexId, caught: Set<number>): void {
+  writeCaught(game, dex, caught)
+  queuePush(game, dex)
+}
+
+/**
+ * Unions the server's list with this device's and keeps the result, on both
+ * sides. Returns the merged set, already persisted.
+ *
+ * The union is the case that will actually happen: someone uses the app
+ * anonymously for weeks and then makes an account. None of that may be thrown
+ * away, so a merge only ever adds.
+ *
+ * The cost of that is stated in src/backend/README.md and accepted there: last
+ * write wins on the whole list, so unmarking on one device while another is
+ * offline can be undone. It needs two devices, an offline edit and an unmark to
+ * show up at all, and the fix is additive.
+ */
+export async function mergeWithServer(game: GameId, dex: DexId): Promise<Set<number>> {
+  const remote = await api.getProgress(game, dex)
+  const merged = new Set([...loadCaught(game, dex), ...remote])
+
+  writeCaught(game, dex, merged)
+
+  // The union always contains the server's list, so equal sizes mean it already
+  // had everything and there is nothing to send back. Without this, merely
+  // opening the page while signed in would write to the database every time.
+  if (merged.size !== remote.length) queuePush(game, dex)
+
+  return merged
 }
 
 export function loadSound(): boolean {

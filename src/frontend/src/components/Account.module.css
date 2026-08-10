@@ -1,0 +1,36 @@
+/*
+ * The same control shape as the sound toggle beside it. These are one row of
+ * header controls sitting on the ground, not two kinds of button.
+ */
+
+.trigger {
+  align-self: center;
+  max-width: 20ch;
+  padding: 4px var(--s1);
+
+  color: var(--panel);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  box-shadow: inset 0 0 0 2px var(--ground-lift);
+
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--notch-sm)) 0,
+    100% var(--notch-sm),
+    100% 100%,
+    0 100%
+  );
+}
+
+/* An address is not a label: upper-cased and letter-spaced it stops looking
+   like the string they typed, and a long one has no room to spare either. */
+.identity {
+  letter-spacing: 0;
+  text-transform: none;
+}

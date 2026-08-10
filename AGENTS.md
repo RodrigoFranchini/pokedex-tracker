@@ -8,15 +8,16 @@ second.
 
 | Part | State |
 |---|---|
-| **Front end** (`src/frontend`) | **Built and working.** Vite + React + TypeScript. |
-| **Back end** (`src/backend`) | **In progress.** Spring Boot + Postgres. All six endpoints work; not deployed. |
+| **Front end** (`src/frontend`) | **Built and working**, including accounts and sync. Not deployed. |
+| **Back end** (`src/backend`) | **Deployed** to Render, with Postgres on Neon. All six endpoints verified live. |
 
-The front end is complete and runs with **no server at all** — progress lives in
-`localStorage` and the dex data ships in the bundle. The back end is an
-addition, not a prerequisite. Nothing is broken without it.
+The front end still runs with **no server at all** — progress lives in
+`localStorage` and the dex data ships in the bundle. An account is an addition,
+not a prerequisite, and nothing is broken without one. Treat that as a test to
+run, not an aspiration: sign out, block the network, and the whole app works.
 
-The one runtime network request is for sprite images, which come from a CDN.
-That is the only thing a lost connection degrades.
+Sprite images come from a CDN and are the only thing a lost connection
+degrades.
 
 ## Documentation
 
@@ -27,7 +28,7 @@ just what.
 | File | Authoritative for |
 |---|---|
 | `src/backend/README.md` | The server: scope, auth, schema, sync design, deployment, what is left. |
-| `src/frontend/README.md` | The front end: how to run it, what is built, storage, the dex data, the two seams, the design tokens. |
+| `src/frontend/README.md` | The front end: how to run it, what is built, storage and sync, the dex data, the three seams, the design tokens. |
 
 There is no separate planning document. An earlier `prompts/` directory held
 one, and it drifted out of agreement with the code — the READMEs replaced it so
@@ -57,13 +58,23 @@ Do not undo these without being asked. Each cost something to arrive at.
 
 - **Local-first.** The app must work fully offline, with no account and no
   server. An account is an upgrade for durability, never a gate.
+- **The front end reaches the API same-origin, on relative paths only.** A Vite
+  proxy in development, a Vercel rewrite in production. There is no API base
+  URL, no `VITE_` variable for one, and **no CORS configuration anywhere** —
+  that is what makes the auth cookie first-party. Adding a base URL breaks the
+  auth design, not just the config.
+- **Auth is a JWT in an httpOnly cookie.** JavaScript cannot read it and must
+  not try. Every API call needs `credentials: 'include'`, which
+  `src/frontend/src/lib/api.ts` sets in exactly one place.
+- **`src/frontend/src/lib/api.ts` is the only module that calls `fetch`.**
 - **The dex data is bundled, not fetched.** A released dex never changes, so
   there is nothing to sync. `paldea.ts` is generated and committed.
 - **`src/frontend/tools/generate-dex.ts` is run by hand**, never in a build or
   on a schedule.
 - **`src/frontend/src/storage/progress.ts` is the only module that touches
-  `localStorage`.** It is the seam that becomes an API client, and it holds the
-  settings as well as the progress. Keep it that way.
+  `localStorage`**, and the only one that mirrors progress to the server. It
+  holds the settings as well as the progress. Keep it that way: nothing above it
+  knows that a server exists.
 - **`src/frontend/src/lib/sprites.ts` is the only place a sprite URL is built.**
   The data file stores a numeric `spriteId` and no URLs.
 - **No component library, no state manager, no CSS framework.** Plain CSS with
@@ -100,6 +111,20 @@ Documented so they are not rediscovered the hard way.
 - **Storage is never re-read to build a save.** While a debounced write is
   pending, `localStorage` still holds the previous value, so a save built from
   it discards the pending change.
+- **Actuator is not under `/api`.** The health endpoint is `/actuator/health`
+  and `SecurityConfig` permits exactly that path, so proxying `/api/actuator/…`
+  straight through answers `401` and the warm-up ping wakes nothing. Both the
+  Vite proxy and the Vercel rewrite map that one path specially.
+- **Escape belongs to the browser inside a `<dialog>`.** Stopping the keydown in
+  the dialog to protect the window-level shortcuts also stopped the dialog
+  closing — Chromium's close-request handling listens above React's root. The
+  guard goes in the window handler instead: no shortcuts while a modal is open.
+- **A merge result is not a local edit.** It is written by the merge itself, so
+  the hook marks it as the already-stored baseline before putting it in state.
+  Otherwise the persist effect saves it straight back and pushes it to a server
+  that just sent it.
+- **The merge reads storage after its request returns**, so a mark made during a
+  20-second cold start ends up in the union instead of being overwritten by it.
 
 ## Conventions
 

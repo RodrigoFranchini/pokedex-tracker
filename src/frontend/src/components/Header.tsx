@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 import { THEMES } from '../types'
 import type { Theme } from '../types'
 import styles from './Header.module.css'
@@ -9,6 +11,9 @@ type Props = {
   onToggleSound: () => void
   theme: Theme
   onThemeChange: (theme: Theme) => void
+  /** The account control. A slot rather than five more props, so the header
+   *  goes on knowing nothing about accounts. */
+  account: ReactNode
 }
 
 export function Header({
@@ -18,6 +23,7 @@ export function Header({
   onToggleSound,
   theme,
   onThemeChange,
+  account,
 }: Props) {
   return (
     <header className={styles.header}>
@@ -49,6 +55,8 @@ export function Header({
       </div>
 
       <span className={styles.spacer} />
+
+      {account}
 
       <button
         type="button"

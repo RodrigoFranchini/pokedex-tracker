@@ -1,0 +1,191 @@
+/*
+ * The panel language, at dialog size: a solid ink block with the light panel
+ * sitting inside it, so the frame follows the notch instead of squaring it off.
+ */
+
+.dialog {
+  /* The reset zeroes every margin, and the UA's auto margin is what centres a
+     modal. Without this the dialog lands in the top-left corner. */
+  margin: auto;
+  width: min(380px, calc(100vw - var(--s4)));
+
+  padding: var(--frame);
+  background: var(--ink);
+  border: none;
+
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--notch)) 0,
+    100% var(--notch),
+    100% 100%,
+    0 100%
+  );
+}
+
+.dialog::backdrop {
+  background: rgb(15 11 24 / 72%);
+}
+
+.body,
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.body {
+  padding: var(--s3);
+  background: var(--panel);
+
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--notch)) 0,
+    100% var(--notch),
+    100% 100%,
+    0 100%
+  );
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+}
+
+.title {
+  font-size: var(--text-md);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.close {
+  margin-left: auto;
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+  line-height: 1;
+}
+
+.close:hover {
+  color: var(--ink);
+}
+
+.blurb {
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+}
+
+/* An address is not a label. Upper-casing it makes it look like a different
+   string from the one they typed. */
+.email {
+  color: var(--ink);
+  text-transform: none;
+  overflow-wrap: anywhere;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+}
+
+.label {
+  color: var(--ink-soft);
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Matches the search field: white is the content surface in this panel. */
+.input {
+  height: var(--s4);
+  padding: 0 var(--s2);
+
+  background: #fff;
+  color: var(--ink);
+  font-size: var(--text-sm);
+  box-shadow: inset 0 0 0 2px var(--ink);
+
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--notch-sm)) 0,
+    100% var(--notch-sm),
+    100% 100%,
+    0 100%
+  );
+}
+
+.hint {
+  color: var(--ink-soft);
+  font-size: var(--text-xs);
+}
+
+/*
+ * The colour is a bar, not the text. Scarlet on the panel is about 3.6:1 and
+ * amber is worse, so a message written in either would be decoration that
+ * happens to also be the content. Ink on white reads, and the bar carries the
+ * meaning.
+ */
+.error,
+.waking {
+  padding: var(--s1) var(--s2);
+  background: #fff;
+  font-size: var(--text-sm);
+}
+
+.error {
+  color: var(--ink);
+  box-shadow: inset 3px 0 0 var(--scarlet);
+}
+
+.waking {
+  color: var(--ink-soft);
+  box-shadow: inset 3px 0 0 var(--amber);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+  margin-top: var(--s1);
+}
+
+.submit {
+  height: var(--s4);
+  padding: 0 var(--s2);
+
+  background: var(--ink);
+  color: var(--panel);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--notch-sm)) 0,
+    100% var(--notch-sm),
+    100% 100%,
+    0 100%
+  );
+}
+
+.submit:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+/* The other mode is a route, not a second action, so it does not look like a
+   button competing with the one above. */
+.link {
+  color: var(--ink-soft);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-decoration: underline;
+  text-transform: uppercase;
+}
+
+.link:hover {
+  color: var(--ink);
+}

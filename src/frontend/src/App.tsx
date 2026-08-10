@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { Account } from './components/Account'
 import { DexList } from './components/DexList'
 import { Header } from './components/Header'
 import { Meter } from './components/Meter'
 import { Toolbar } from './components/Toolbar'
 import { PALDEA_DEX } from './data/paldea'
+import { useAuth } from './hooks/useAuth'
 import { useCursor } from './hooks/useCursor'
 import { useFilters } from './hooks/useFilters'
 import { useProgress } from './hooks/useProgress'
@@ -17,7 +19,8 @@ const GAME: GameId = 'scarlet-violet'
 const DEX: DexId = 'paldea'
 
 export default function App() {
-  const { caught, toggle, count } = useProgress(GAME, DEX)
+  const auth = useAuth()
+  const { caught, toggle, count } = useProgress(GAME, DEX, auth.user?.id ?? null)
   const { enabled: soundEnabled, toggleEnabled: toggleSound, play } = useSound()
   const { theme, setTheme } = useTheme()
 
@@ -54,6 +57,12 @@ export default function App() {
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      // A modal owns the page while it is open, Escape included. Swallowing it
+      // in the dialog instead would take Escape from the browser's own
+      // close-request handling, which listens above React's root and would
+      // stop closing the dialog at all.
+      if (document.querySelector('dialog[open]')) return
+
       const target = event.target as HTMLElement | null
       const typing = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA'
 
@@ -83,6 +92,15 @@ export default function App() {
         onToggleSound={toggleSound}
         theme={theme}
         onThemeChange={setTheme}
+        account={
+          <Account
+            user={auth.user}
+            waking={auth.waking}
+            onRegister={auth.register}
+            onLogin={auth.login}
+            onLogout={auth.logout}
+          />
+        }
       />
 
       <Meter entries={PALDEA_DEX} caught={caught} onSeek={handleSeek} />
