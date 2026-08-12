@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/actuator/:path*",
+      "destination": "https://pokedex-tracker-awo1.onrender.com/actuator/:path*"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "https://pokedex-tracker-awo1.onrender.com/api/:path*"
+    }
+  ]
+}
