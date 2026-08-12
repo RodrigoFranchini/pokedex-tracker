@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { loadCaught, mergeWithServer, saveCaught, setSignedIn } from '../storage/progress'
+import { loadCaught, mergeWithServer, saveCaught, setAccount } from '../storage/progress'
 import type { DexId, GameId } from '../types'
 
 /**
@@ -49,7 +49,7 @@ export function useProgress(game: GameId, dex: DexId, userId: string | null) {
   }, [game, dex, caught])
 
   /**
-   * Pull on sign-in, and on every load while signed in — the merge is the only
+   * Reconcile on sign-in, and on every load while signed in — this is the only
    * way a mark made on another device arrives here.
    *
    * A failure is silence by design. The dex is already on screen and already
@@ -57,11 +57,11 @@ export function useProgress(game: GameId, dex: DexId, userId: string | null) {
    * someone working through a checklist.
    */
   useEffect(() => {
-    setSignedIn(userId !== null)
+    setAccount(userId)
     if (userId === null) return
 
     let live = true
-    void mergeWithServer(game, dex).then((merged) => {
+    void mergeWithServer(game, dex, userId).then((merged) => {
       if (!live) return
       // The merge has already written this, so it is the new baseline rather
       // than an edit. Without this the effect above would save it straight back
