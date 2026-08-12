@@ -96,3 +96,14 @@ React 19, TypeScript, Vite, CSS Modules. Java 21, Spring Boot, Spring Security,
 JPA/Hibernate, Flyway. PostgreSQL on Neon, back end on Render via Docker. No
 component library, no state manager, no CSS framework —
 [deliberately](docs/decisions/0007-no-framework-dependencies.md).
+
+## License
+
+This repository's own code — front end and back end — is [MIT-licensed](LICENSE).
+
+Pokémon data is not: `src/frontend/src/data/paldea.ts` is generated from
+[PokéAPI](https://pokeapi.co/docs/v2), and the sprites it points at are served
+from PokéAPI's own asset repository. Neither is this project's to relicense.
+Pokémon and all Pokémon character names are trademarks of Nintendo, Game
+Freak, and Creatures Inc. This is an unofficial fan project with no
+affiliation to or endorsement from any of them.

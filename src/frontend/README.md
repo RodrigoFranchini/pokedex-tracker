@@ -18,6 +18,9 @@ optional, reversible, and never a gate. The server behind it is documented in
 Sprite images come from a CDN and are the only thing a lost connection
 degrades.
 
+Licensing, including for `src/data/paldea.ts` and the sprites it points at, is
+covered once at the repo root — see [`../../README.md`](../../README.md#license).
+
 ---
 
 ## 1. Running it
