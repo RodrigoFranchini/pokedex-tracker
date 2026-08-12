@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { Account } from './components/Account'
+import { AuthDialog } from './components/AuthDialog'
 import { DexList } from './components/DexList'
+import { Dock } from './components/Dock'
 import { Header } from './components/Header'
 import { Meter } from './components/Meter'
 import { Toolbar } from './components/Toolbar'
@@ -29,6 +31,9 @@ export default function App() {
 
   /** Only the entry just toggled animates, so page load stays still. */
   const [lastToggled, setLastToggled] = useState<number | null>(null)
+
+  /** The corner plate and the dock both open the one dialog. */
+  const [authOpen, setAuthOpen] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
 
   const allTypes = useMemo(
@@ -85,6 +90,11 @@ export default function App() {
 
   return (
     <div className={styles.page}>
+      {/* Outside the header on purpose: it owns the screen's corner, and the
+          header is a row of settings. Hidden on a phone, where the dock has
+          the account instead. */}
+      <Account user={auth.user} onOpen={() => setAuthOpen(true)} />
+
       <Header
         caught={count}
         total={PALDEA_DEX.length}
@@ -92,15 +102,6 @@ export default function App() {
         onToggleSound={toggleSound}
         theme={theme}
         onThemeChange={setTheme}
-        account={
-          <Account
-            user={auth.user}
-            waking={auth.waking}
-            onRegister={auth.register}
-            onLogin={auth.login}
-            onLogout={auth.logout}
-          />
-        }
       />
 
       <Meter entries={PALDEA_DEX} caught={caught} onSeek={handleSeek} />
@@ -157,6 +158,28 @@ export default function App() {
           <b>Esc</b> clear search
         </span>
       </p>
+
+      <Dock
+        query={filters.query}
+        onQueryChange={filters.setQuery}
+        status={filters.status}
+        onStatusChange={filters.setStatus}
+        user={auth.user}
+        onOpenAccount={() => setAuthOpen(true)}
+      />
+
+      {/* Mounted only while open, so the password never outlives the dialog
+          that collected it, and every visit starts on the login side. */}
+      {authOpen && (
+        <AuthDialog
+          user={auth.user}
+          waking={auth.waking}
+          onRegister={auth.register}
+          onLogin={auth.login}
+          onLogout={auth.logout}
+          onClose={() => setAuthOpen(false)}
+        />
+      )}
     </div>
   )
 }

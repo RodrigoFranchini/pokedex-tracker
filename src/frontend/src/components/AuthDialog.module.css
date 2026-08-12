@@ -1,6 +1,7 @@
 /*
- * The panel language, at dialog size: a solid ink block with the light panel
- * sitting inside it, so the frame follows the notch instead of squaring it off.
+ * The same window the account plate is: a solid ink block with a title bar
+ * across the top and the light panel sitting inside it, so the frame follows
+ * the notch instead of squaring it off.
  */
 
 .dialog {
@@ -13,6 +14,10 @@
   background: var(--ink);
   border: none;
 
+  /* Four steps, not a fade: every other state change on the page is quantised,
+     so a modal that eased in would be the one smooth thing on it. */
+  animation: open var(--snap);
+
   clip-path: polygon(
     0 0,
     calc(100% - var(--notch)) 0,
@@ -22,8 +27,72 @@
   );
 }
 
+@keyframes open {
+  from {
+    transform: scaleY(0.4);
+    opacity: 0;
+  }
+}
+
 .dialog::backdrop {
   background: rgb(15 11 24 / 72%);
+  animation: dim var(--snap);
+}
+
+@keyframes dim {
+  from {
+    opacity: 0;
+  }
+}
+
+/*
+ * The mouse pointer while a request is out, not the list cursor. Every child
+ * is included because the reset gives buttons their own pointer and the fields
+ * their own caret, and a busy window should not have three of them.
+ *
+ * The frame is written onto the element as --wait-frame; the frames themselves
+ * are tokens.
+ */
+.waiting,
+.waiting * {
+  cursor: var(--wait-frame, progress);
+}
+
+/* Padded to the body's text column, not to the frame: the title lines up with
+   everything under it. */
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  height: var(--s4);
+  padding: 0 var(--s1) 0 var(--s3);
+}
+
+.title {
+  color: var(--panel);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--s3);
+  height: var(--s3);
+  margin-left: auto;
+
+  color: rgb(237 235 243 / 70%);
+  font-size: var(--text-sm);
+  line-height: 1;
+  transition: background var(--snap);
+}
+
+.close:hover {
+  background: rgb(237 235 243 / 14%);
+  color: var(--panel);
 }
 
 .body,
@@ -33,41 +102,21 @@
   gap: var(--s2);
 }
 
+/*
+ * Its own cut inside the dialog's, the way the plate's face is cut inside the
+ * plate. The stepped corner is what makes the two read as one system.
+ */
 .body {
   padding: var(--s3);
   background: var(--panel);
 
   clip-path: polygon(
     0 0,
-    calc(100% - var(--notch)) 0,
-    100% var(--notch),
+    calc(100% - var(--notch-sm)) 0,
+    100% var(--notch-sm),
     100% 100%,
     0 100%
   );
-}
-
-.head {
-  display: flex;
-  align-items: baseline;
-  gap: var(--s2);
-}
-
-.title {
-  font-size: var(--text-md);
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.close {
-  margin-left: auto;
-  color: var(--ink-soft);
-  font-size: var(--text-sm);
-  line-height: 1;
-}
-
-.close:hover {
-  color: var(--ink);
 }
 
 .blurb {
@@ -113,6 +162,15 @@
     100% 100%,
     0 100%
   );
+}
+
+/* Same reason as the dock's field: under 16px, iOS zooms the page in the moment
+   the field takes focus — and it does not zoom back out. Phones only, so the
+   dialog keeps its type scale everywhere the problem does not exist. */
+@media (width < 620px) {
+  .input {
+    font-size: var(--text-field);
+  }
 }
 
 .hint {
@@ -161,6 +219,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  transition: background var(--snap);
 
   clip-path: polygon(
     0 0,
@@ -169,6 +228,11 @@
     100% 100%,
     0 100%
   );
+}
+
+/* Sinks on the press, the way the plate's face does. */
+.submit:active:not(:disabled) {
+  background: var(--ink-soft);
 }
 
 .submit:disabled {

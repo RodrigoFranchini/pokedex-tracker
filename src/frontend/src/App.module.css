@@ -1,7 +1,12 @@
+/*
+ * The top padding clears the account plate in the screen's corner, so the
+ * header and the plate cannot overlap at any width. It is not positioned:
+ * the plate's offsets resolve against the page, not against this column.
+ */
 .page {
   max-width: 900px;
   margin: 0 auto;
-  padding: var(--s3) var(--s2) var(--s5);
+  padding: var(--s5) var(--s2) var(--s5);
 }
 
 /*
@@ -53,4 +58,22 @@
 .legend b {
   color: var(--amber);
   font-weight: 700;
+}
+
+@media (width < 620px) {
+  .page {
+    /* No plate in the corner here, so nothing to clear at the top.
+       The bottom clears the dock with its search field open — 110px — plus
+       whatever the phone reserves under that. Reserving the open height rather
+       than the closed one costs a strip of ground at the end of the scroll and
+       means entry 400 is never behind the bar. */
+    padding-top: var(--s3);
+    padding-bottom: calc(120px + env(safe-area-inset-bottom));
+  }
+
+  /* A keyboard legend on a touch screen names four keys that are not there,
+     and it would sit behind the dock besides. */
+  .legend {
+    display: none;
+  }
 }

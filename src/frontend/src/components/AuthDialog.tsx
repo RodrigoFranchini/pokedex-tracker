@@ -28,13 +28,19 @@ const MIN_PASSWORD = 8
 const MAX_PASSWORD = 72
 
 /**
- * The whole fix for the cold start is this sentence. An explained wait reads as
- * self-aware; a frozen button reads as broken.
+ * The whole fix for the cold start is this line. An explained wait reads as
+ * self-aware; a frozen button reads as broken. It says how long and stops
+ * there — why the hosting is slow is not the waiting person's problem.
  */
-const WAKING_MESSAGE = 'Waking the server — this can take a minute on free hosting.'
+const WAKING_MESSAGE = 'Waking the server. Up to a minute.'
+
+/** One frame per --snap step, so the pointer waits in the page's own rhythm. */
+const WAIT_FRAME_MS = 80
+const WAIT_FRAMES = 4
 
 export function AuthDialog({ user, waking, onRegister, onLogin, onLogout, onClose }: Props) {
   const ref = useRef<HTMLDialogElement>(null)
+  const frame = useRef(0)
 
   const [creating, setCreating] = useState(false)
   const [email, setEmail] = useState('')
@@ -49,13 +55,39 @@ export function AuthDialog({ user, waking, onRegister, onLogin, onLogout, onClos
     ref.current?.showModal()
   }, [])
 
+  // The pointer's frame is written straight onto the element rather than held
+  // in state: a cold start runs for a minute, and re-rendering the form twelve
+  // times a second to move a cursor would be a lot of work for the same pixels.
+  useEffect(() => {
+    const dialog = ref.current
+    if (!pending || !dialog) return
+
+    frame.current = 0
+    dialog.style.setProperty('--wait-frame', 'var(--cursor-wait-0)')
+
+    // A pointer flickering at 12fps is exactly what asking for less motion
+    // means; the first frame alone still says busy.
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const timer = still
+      ? undefined
+      : setInterval(() => {
+          frame.current = (frame.current + 1) % WAIT_FRAMES
+          dialog.style.setProperty('--wait-frame', `var(--cursor-wait-${frame.current})`)
+        }, WAIT_FRAME_MS)
+
+    return () => {
+      clearInterval(timer)
+      dialog.style.removeProperty('--wait-frame')
+    }
+  }, [pending])
+
   async function run(action: () => Promise<void>) {
     setError(null)
     setPending(true)
 
     // If the warm-up ping has not come back, the instance is still cold and we
-    // can say so at once. Otherwise wait a beat before blaming free hosting for
-    // what might just be a slow connection.
+    // can say so at once. Otherwise wait a beat before calling it asleep when
+    // it might just be a slow connection.
     const timer = setTimeout(() => setSlow(true), waking ? 0 : SLOW_REQUEST_MS)
 
     try {
@@ -106,15 +138,21 @@ export function AuthDialog({ user, waking, onRegister, onLogin, onLogout, onClos
   }
 
   return (
-    <dialog ref={ref} className={styles.dialog} onClose={onClose}>
-      <div className={styles.body}>
-        <div className={styles.head}>
-          <h2 className={styles.title}>{title}</h2>
-          <button type="button" className={styles.close} aria-label="Close" onClick={onClose}>
-            ✕
-          </button>
-        </div>
+    <dialog
+      ref={ref}
+      className={`${styles.dialog} ${pending ? styles.waiting : ''}`}
+      onClose={onClose}
+    >
+      {/* The head sits on the ink rather than in the panel, so the dialog is
+          the same object as the plate that opened it: a title bar over a face. */}
+      <div className={styles.head}>
+        <h2 className={styles.title}>{title}</h2>
+        <button type="button" className={styles.close} aria-label="Close" onClick={onClose}>
+          ✕
+        </button>
+      </div>
 
+      <div className={styles.body}>
         {user ? (
           <>
             <p className={styles.blurb}>
@@ -137,11 +175,10 @@ export function AuthDialog({ user, waking, onRegister, onLogin, onLogout, onClos
         ) : (
           <form className={styles.form} onSubmit={handleSubmit}>
             {/* Before the fields, not after: someone deciding whether to hand
-                over an address should know it buys durability, not access. */}
-            <p className={styles.blurb}>
-              An account carries your progress to another device. Everything works
-              without one, and what you have marked here stays here.
-            </p>
+                over an address should know what it buys. One line, and it says
+                the one thing an account does — the corner plate no longer
+                implies anything about where the dex is saved. */}
+            <p className={styles.blurb}>An account keeps your dex on your other devices.</p>
 
             <label className={styles.field}>
               <span className={styles.label}>Email</span>

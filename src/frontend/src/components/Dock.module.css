@@ -1,0 +1,166 @@
+/*
+ * Built like the account plate: an ink block with a face inside it, so the
+ * frame follows the notch. The face is the panel rather than lifted ground,
+ * because this bar is the toolbar moved to the thumb — same controls, same
+ * contrast pairs, and a light bar reads as the menu it is.
+ *
+ * Desktop never sees it; the toolbar is already within reach there.
+ */
+
+.dock {
+  display: none;
+
+  position: fixed;
+  inset: auto 0 0;
+
+  padding: var(--frame);
+  /* The face clears the home indicator and the browser's own bottom chrome,
+     while the ink simply carries on into that strip. */
+  padding-bottom: calc(var(--frame) + env(safe-area-inset-bottom));
+  background: var(--ink);
+
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--notch)) 0,
+    100% var(--notch),
+    100% 100%,
+    0 100%
+  );
+}
+
+@media (width < 620px) {
+  .dock {
+    display: block;
+  }
+}
+
+.face {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  padding: var(--s1);
+  background: var(--panel);
+
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--notch-sm)) 0,
+    100% var(--notch-sm),
+    100% 100%,
+    0 100%
+  );
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+}
+
+/* 40px, not the toolbar's 32: this one is hit with a thumb. */
+.slot {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+
+  color: var(--ink);
+  font-size: var(--text-sm);
+  line-height: 1;
+  box-shadow: inset 0 0 0 2px var(--ink);
+
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--notch-sm)) 0,
+    100% var(--notch-sm),
+    100% 100%,
+    0 100%
+  );
+}
+
+/* Open search inverts, the same way a pressed segment does. */
+.slot[aria-expanded='true'] {
+  background: var(--ink);
+  color: var(--panel);
+}
+
+.glyph {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+/* Empty is an outline, filled is solid — the page's own way of saying whether
+   a thing is set, borrowed from the caught mark. */
+.glyphFilled {
+  fill: currentColor;
+}
+
+/* Three states, one choice: the toolbar's segmented control, at thumb size. */
+.segmented {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  box-shadow: inset 0 0 0 2px var(--ink);
+
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--notch-sm)) 0,
+    100% var(--notch-sm),
+    100% 100%,
+    0 100%
+  );
+}
+
+.segment {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+
+  color: var(--ink);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.segment[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--panel);
+}
+
+/* Matches the search field it replaces: white is the content surface. */
+.field {
+  width: 100%;
+  height: 40px;
+  padding: 0 var(--s2);
+
+  background: #fff;
+  color: var(--ink);
+  /* Not --text-sm: iOS zooms the whole page in to focus anything smaller. */
+  font-size: var(--text-field);
+  box-shadow: inset 0 0 0 2px var(--ink);
+
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--notch-sm)) 0,
+    100% var(--notch-sm),
+    100% 100%,
+    0 100%
+  );
+}
+
+/* The slot beside it is already the close control, and the native one is a blue
+   glyph that belongs to the browser rather than to this page. */
+.field::-webkit-search-cancel-button {
+  display: none;
+}
+
+.field::placeholder {
+  color: var(--ink-soft);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}

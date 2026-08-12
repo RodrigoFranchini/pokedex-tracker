@@ -2,7 +2,16 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      viewport-fit=cover is what makes env(safe-area-inset-bottom) non-zero, and
+      the fixed dock uses it to keep its face off the home indicator.
+      interactive-widget=resizes-content shrinks the layout so the dock rides
+      above the on-screen keyboard instead of under it when search opens.
+    -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content"
+    />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="theme-color" content="#5c1622" />
     <meta

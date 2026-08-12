@@ -174,3 +174,18 @@
   background: var(--ink);
   opacity: 1;
 }
+
+/*
+ * Search and status move to the dock on a phone, where the thumb is. They stay
+ * mounted and hidden rather than being rendered conditionally: both copies are
+ * driven by the same filter state, so there is nothing to keep in step, and no
+ * layout jump while a media query is worked out in JavaScript.
+ *
+ * Version and type stay here. Those are set once; status is flipped constantly.
+ */
+@media (width < 620px) {
+  .search,
+  .segmented {
+    display: none;
+  }
+}

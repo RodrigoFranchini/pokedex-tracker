@@ -101,3 +101,32 @@
   color: var(--ink);
   box-shadow: none;
 }
+
+/*
+ * Two deliberate lines instead of whatever the wrap decides: the wordmark and
+ * the count, then the two settings. The count is the number the page exists to
+ * report, so it goes on the first line rather than being orphaned under it.
+ *
+ * The spacer does the breaking — full width and no height, it pushes
+ * everything ordered after it onto a line of its own.
+ */
+@media (width < 620px) {
+  .count {
+    margin-left: auto;
+  }
+
+  .spacer {
+    order: 1;
+    flex-basis: 100%;
+    height: 0;
+  }
+
+  .games {
+    order: 2;
+  }
+
+  .sound {
+    order: 2;
+    margin-left: auto;
+  }
+}

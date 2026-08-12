@@ -51,9 +51,31 @@
   --text-md: 14px;
   --text-lg: 18px;
 
+  /* The size a text field has to be for iOS Safari to focus it without zooming
+     the page in. It is not a step on the scale above and belongs to nothing but
+     inputs on a phone — anything smaller costs a zoom the reader then has to
+     undo by hand. */
+  --text-field: 16px;
+
   /* --- Motion -------------------------------------------------------------
    * Quantised, not eased. The state change is where the retro feel lives. */
   --snap: 80ms steps(4, end);
+
+  /* --- Waiting pointer ----------------------------------------------------
+   * The page's one clipped corner, walking. Four frames, one per --snap step,
+   * so the pointer waits in the same rhythm every other state change moves in.
+   * This is the mouse pointer, not the list cursor in hooks/useCursor.
+   *
+   * The colours are literals because a cursor image cannot read a custom
+   * property, which is exactly why the frames are declared here rather than in
+   * the component: tokens.css stays the only file that names a colour.
+   *
+   * Each frame ends in `progress` for Safari, which does not support SVG
+   * cursors at all and takes the native one instead. */
+  --cursor-wait-0: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cpath d='M2 2H10L14 6V14H2Z' fill='%23ffc94d' stroke='%23221b33' stroke-width='2'/%3E%3C/svg%3E") 8 8, progress;
+  --cursor-wait-1: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cpath d='M2 2H14V10L10 14H2Z' fill='%23ffc94d' stroke='%23221b33' stroke-width='2'/%3E%3C/svg%3E") 8 8, progress;
+  --cursor-wait-2: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cpath d='M2 2H14V14H6L2 10Z' fill='%23ffc94d' stroke='%23221b33' stroke-width='2'/%3E%3C/svg%3E") 8 8, progress;
+  --cursor-wait-3: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cpath d='M6 2H14V14H2V6Z' fill='%23ffc94d' stroke='%23221b33' stroke-width='2'/%3E%3C/svg%3E") 8 8, progress;
 
   /* --- Pokemon types ------------------------------------------------------
    * The 18-type convention belongs to the subject, not to any one game's UI. */
