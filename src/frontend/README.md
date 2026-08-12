@@ -87,6 +87,7 @@ One caveat: the cookie is `Secure`, which Chrome and Firefox accept over
 | Register, log in, log out, current user | `hooks/useAuth`, `components/Account`, `components/AuthDialog` |
 | Progress mirrored to that account, merged on sign-in | `storage/progress`, `hooks/useProgress` |
 | Warm-up ping, and the waiting state a cold start needs | `lib/api`, `components/AuthDialog` |
+| A fixed control bar on phones, holding search, status and the account | `components/Dock` |
 
 Nothing here is behind a flag or half-wired. What is *not* built is a second
 dex.
@@ -108,6 +109,87 @@ dex.
   says so explicitly rather than leaving it a mystery.
 - The eighteen type chips are collapsed by default. Shown at all times they
   outweigh the list they filter.
+
+### On a phone
+
+Below 620px — the same breakpoint the rows already use — **the two controls you
+touch constantly move to a fixed bar at the bottom edge**, where the thumb is:
+search, the caught status, and the account. Version and type stay in the
+toolbar; those are set once, while status is flipped continually. The list is
+400 rows long, so a filter at the top of it is a filter you have to scroll back
+to.
+
+- **Search opens on demand.** The bar holds a glyph; tapping it slides a field
+  in above the bar and focuses it, and the glyph becomes the close control.
+  Closing clears the query, the way Escape does everywhere else — a filter still
+  applied with no field on screen to explain it is the one outcome worth
+  designing out. Blurring an empty field just collapses it.
+- **The status states keep their words.** `ALL / CAUGHT / MISSING` fit at 375px
+  with room to spare, and a glyph for "missing" would be a guess. Only search
+  and the account become glyphs, which is where the space is actually saved.
+- **The glyphs are drawn here, not installed.** A lens carrying the page's own
+  notch, and a notched card for the account that fills in when you are signed
+  in — outline against solid is how the caught mark already says set or not set.
+- **The bar's face is the panel, not lifted ground.** It is the toolbar moved to
+  the thumb, so it reuses the same controls and the same proven contrast pairs.
+  The plate in the corner stands alone on open ground, which is why that one is
+  made of ground and this one is not.
+
+Two things are hidden rather than rearranged: the corner plate, because the
+account is in the bar and two triggers in the two least comfortable corners is
+worse than one; and the keyboard legend, which names four keys a phone does not
+have.
+
+**The controls are duplicated in the DOM, not moved.** The toolbar's search and
+segmented control stay mounted and are hidden by a media query, and the dock has
+its own. Both copies are driven by the same filter state, so there is nothing to
+keep in step, and no layout jump while JavaScript works out a breakpoint. Only
+one set is ever on screen, so only one is ever in the accessibility tree.
+
+**Text fields are 16px on a phone, and that is not a type decision.** iOS Safari
+zooms the whole page in when a field smaller than that takes focus, and it does
+not zoom back out — the page is left magnified and the fixed bar drifts.
+`--text-field` exists for exactly this, and it applies to the dock's field and,
+under 620px, to the dialog's. Everywhere the problem does not exist, the fields
+keep `--text-sm`.
+
+**The close slot suppresses its own mousedown**, and that is load-bearing.
+Without it the press moves focus off the field, the empty-field rule collapses
+the strip, and the click that follows lands on a button that has already turned
+back into the lens — so closing search reopened it. Preventing the default on
+`mousedown` keeps focus in the field long enough for the click to mean what it
+says. It does not stop the click, and tapping the list still collapses an empty
+field, because only this one button opts out of taking focus.
+
+**Search focuses inside the tap, not in an effect.** `flushSync` renders the
+field during the click so `focus()` still counts as coming from the gesture; iOS
+opens the keyboard only for that. Focusing from an effect runs after the gesture
+is over, and the field appears with no keyboard, waiting for a second tap.
+
+**Two viewport details are load-bearing**, both in `index.html`:
+`viewport-fit=cover` is what makes `env(safe-area-inset-bottom)` non-zero, and
+without it the bar's face sits under the home indicator; and
+`interactive-widget=resizes-content` shrinks the layout when the on-screen
+keyboard opens, so the bar rides above the keyboard rather than under it.
+
+**`fixed` alone does not put the bar on the bottom of the screen**, which is the
+part that surprises. It pins to the *layout* viewport, and on a phone that is
+not what you can see: Safari's bottom address bar and the keyboard sit over it,
+and iOS moves the visual viewport during a scroll without moving fixed elements
+with it — so the bar drifts while the page settles and hides behind the keyboard
+while you type. `interactive-widget` fixes the keyboard half on Chrome and is
+ignored by iOS.
+
+So the dock measures it. `window.innerHeight - (visualViewport.height +
+visualViewport.offsetTop)` is how much of the layout viewport is covered, and
+the bar is translated up by exactly that on `visualViewport`'s `resize` and
+`scroll`. Where the browser shrinks the layout instead, the gap is zero and the
+transform is never set. This is the one piece of layout in the app done in
+JavaScript, and only because there is no CSS that expresses it.
+
+The page reserves 120px at the bottom — the bar's height *with the search field
+open*, not closed. Reserving the closed height costs nothing until someone opens
+search on an unfiltered list, and then entry 400 is unreachable behind the bar.
 
 ### The cursor
 
@@ -158,10 +240,40 @@ than as a preference being restored. Its fallback must stay in step with
 
 ### The account
 
-One control in the header, one dialog behind it. Signed out it is a form that
-switches between logging in and creating an account; signed in it is your
-address and the way back out. **The dialog is mounted only while open**, so the
-password never outlives it and every visit starts on the login side.
+**One plate in the screen's top-right corner, one dialog behind it.** Signed out
+the plate reads `ACCOUNT / LOG IN`; signed in the face carries your address. The
+dialog is a form that switches between logging in and creating an account, or
+signed in, your address and the way back out. **The dialog is mounted only while
+open**, so the password never outlives it and every visit starts on the login
+side.
+
+**One dialog, two triggers.** The plate and the phone's dock both open it, so
+`App` owns whether it is open and renders it; the plate is a button and nothing
+more. Two dialogs, one per trigger, would put a hidden modal in the DOM at every
+width.
+
+The plate is deliberately not a header control. Sound and the world are
+settings; an account is not one, and in the header row it read as a third
+toggle. Two things follow from where it sits:
+
+- **It is positioned against the viewport, not against the 900px column**, which
+  works because nothing above it is positioned. Giving `.page` a `position`
+  would move it. It is `absolute` rather than `fixed` on purpose: pinned, it
+  would sit over the mark column of the top row on a narrow screen, and the page
+  has no sticky chrome anywhere else.
+- **The page's top padding is `--s5`, exactly the plate's height**, so the plate
+  and the header cannot collide at any width. On a narrow screen the header
+  simply wraps beneath it. That is why there is no media query for this.
+
+**The face names the action, never the storage.** An earlier version stated
+where the dex was saved — `SAVE DATA / THIS DEVICE` — which was true and read
+exactly backwards: a hoverable control labelled with the current storage implies
+that pressing it is how saving happens. What an account is for is said once, in
+the dialog: *"An account keeps your dex on your other devices."*
+
+Plate and dialog are the same object at two sizes: an ink title strip over a
+notched face, with the face's own cut inside the frame's. That stepped corner is
+what makes the window look like it came from the control that opened it.
 
 **The cold start is answered with a sentence, not a spinner.** The free Render
 instance sleeps after fifteen minutes and a JVM wakes slowly, so the warm-up
@@ -170,13 +282,38 @@ spent while someone is reading the list rather than staring at a button. If they
 click before it comes back the server is provably still asleep, and the dialog
 says so immediately:
 
-> Waking the server — this can take a minute on free hosting.
+> Waking the server. Up to a minute.
+
+It says how long and stops there. Why the hosting is slow is not the waiting
+person's problem, and the sentence that explained it was the longest thing in
+the dialog. **This file is authoritative for that wording** —
+`../backend/README.md` quotes it, and quotes this version.
 
 Otherwise that notice waits 4s. **Login is not fast even awake** — bcrypt, on a
 throttled free instance, across the Atlantic, measured between 0.8s and 2.3s —
 and a threshold under that would cry "asleep" at every ordinary login. An
 explained wait reads as self-aware, a frozen button reads as broken, and a wrong
 explanation is worse than either.
+
+**The mouse pointer waits too.** While a request is out, everything in the
+dialog takes a drawn cursor: the page's one clipped corner, with the notch
+walking the four corners a frame at a time, 80ms each — the same rhythm and the
+same shape as everything else that moves here. Four `--cursor-wait-*` tokens
+hold the frames, because a cursor image cannot read a custom property and
+`tokens.css` stays the only file that names a colour. Three details are
+load-bearing:
+
+- **The frame is written onto the element, not held in state.** A cold start
+  runs for a minute; re-rendering the form twelve times a second to move a
+  cursor would be a lot of work for the same pixels.
+- **Reduced motion gets frame one and no interval.** A pointer flickering at
+  12fps is exactly what asking for less motion means, and one frame still says
+  busy.
+- **Every frame ends in `progress`.** Safari does not support SVG cursors at
+  all and takes the native one.
+
+This is the *pointer*. The cursor in `hooks/useCursor` is the keyboard position
+over the list, and the two are unrelated.
 
 A refusal the server explained is shown in its own words. Failing to reach the
 server at all says so *and* says the progress is safe on this device, which is
@@ -198,10 +335,15 @@ the server**, under the single key `pokedex-tracker`:
 ```jsonc
 {
   "schemaVersion": 1,
+  "owner": null,                       // the account this progress belongs to
   "settings": { "sound": false, "theme": "scarlet" },
   "progress": {
     "scarlet-violet": {
-      "paldea": { "caught": [906, 907, 909], "updatedAt": "2026-08-07T…" }
+      "paldea": {
+        "caught": [906, 907, 909],
+        "anonymous": [909],            // of those, marked with nobody signed in
+        "updatedAt": "2026-08-07T…"
+      }
     }
   }
 }
@@ -247,18 +389,25 @@ default would never reach them.
 **The device is the source of truth. The account holds a copy.** Storage is
 written first and always; the server is told afterwards, or not at all.
 
-- **Pull on sign-in, and on every load while signed in.** The server's list is
-  unioned with this device's and the union is kept on both sides. That merge is
-  the only way a mark made on another device arrives here.
+- **Pull on sign-in, and on every load while signed in.** That merge is the
+  only way a mark made on another device arrives here. It usually unions the
+  two lists and keeps the result on both sides — but not when the device holds
+  *another* account's dex, which is what `owner` and `anonymous` above are for.
+  The three cases and the reasoning behind them are in
+  [`../../docs/decisions/0004-progress-ownership.md`](../../docs/decisions/0004-progress-ownership.md);
+  read it before changing `mergeWithServer`.
 - **Push on change, debounced 2s.** The whole list, never a delta — the server
   stores it in one `integer[]` column. Longer than the 300ms storage debounce
   because the costs are not comparable: a `localStorage` write is free and a
   round trip to Ohio is not. `pagehide` flushes a pending push with
   `keepalive`, because a normal fetch is cancelled on unload. `sendBeacon` is
   not an option — it only sends POST and this endpoint is a PUT.
-- **Nothing is pushed while signed out**, and signing out cancels a pending
-  push while leaving local progress exactly as it was. Logging out must not
-  look anything like losing your dex.
+- **Nothing is pushed while signed out.** Signing out *flushes* a pending push
+  first and waits for it, while the cookie is still valid — cancelling it
+  instead threw away every mark made in the two seconds before signing out,
+  including the whole dex a merge had just queued for a fresh account. Local
+  progress and its `owner` are then left exactly as they were: logging out must
+  not look anything like losing your dex.
 - **Pushes are silent, and nothing above this module can tell whether one
   worked.** Every push sends the whole list, so a failure is superseded by the
   next change and repaired by the next merge. There is nothing useful to say.
@@ -333,7 +482,8 @@ src/
                 useSound         sound preference and playback
                 useTheme         data-theme on <html>
   components/   Header           wordmark, counter, theme and sound controls
-                Account          the header control; owns the dialog's state
+                Account          the corner plate; hidden on a phone
+                Dock             the phone's fixed bar: search, status, account
                 AuthDialog       log in / create account / log out
                 Meter            400 segments, seeks on click, memoised
                 Toolbar          search, status, version, type chips
@@ -343,7 +493,7 @@ src/
                 TypeBadge        one type, coloured from a token
   lib/          api.ts           the only module that calls fetch
                 sprites.ts       the single place a sprite URL is built
-  styles/       tokens.css       colour, space, shape, type, motion, 18 types
+  styles/       tokens.css       colour, space, shape, type, motion, pointer, 18 types
                 global.css       reset and page-level rules
 tools/
   generate-dex.ts                run by hand
@@ -393,7 +543,12 @@ constraints there are deliberate and cheap to break by accident:
   UI without a pixel font or a texture.
 - **Mono everywhere**; the pixel face appears exactly once, as the wordmark.
 - **Motion is quantised, not eased** (`80ms steps(4, end)`). The state change is
-  where the retro feel lives.
+  where the retro feel lives. The dialog snaps open in those four steps, and the
+  waiting pointer runs one frame per step.
+- **Things standing on open ground are made of ground.** The account plate's
+  face is `--ground-lift`, the material the meter track already uses. Built out
+  of `--ink` it read as a hole cut in the world rather than an object on it, and
+  the cold blue-black fought the scarlet. The ink survives as the 3px frame.
 - **The 18 type colours are tokens.** `TypeBadge` just points at the right one.
 
 Fonts are self-hosted via `@fontsource`, only the weights actually used, so the

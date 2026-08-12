@@ -316,7 +316,12 @@ enforces that — forget one and the app will not start.
 
 ---
 
-## 7. Sync (planned)
+## 7. Sync
+
+**Built and working.** This section describes the server's half of the
+contract; the whole of it, including what the client does on sign-in and
+sign-out, is in
+[`../../docs/architecture.md`](../../docs/architecture.md).
 
 Progress for one dex is a list of national dex numbers. Sync is:
 
@@ -419,9 +424,10 @@ link, looks around, and clicks *Log in* — the one action that demonstrates the
 is a back end at all. That is exactly when they meet the cold start.
 
 **The fix is a string, not a paid plan.** Say what is happening: *"Waking the
-server — this can take a minute on free hosting."* An explained wait reads as
-self-aware; a frozen button reads as broken. The login and register screens need
-that loading state, and it is part of the plan rather than an afterthought.
+server. Up to a minute."* An explained wait reads as self-aware; a frozen button
+reads as broken. The login and register screens need that loading state, and it
+is part of the plan rather than an afterthought. The exact wording belongs to
+the front end — `src/frontend/README.md` is authoritative for it.
 
 Paying ~$7/month for a warm Render instance removes the problem entirely, worth
 doing at the moment it has value rather than on principle. The choice is

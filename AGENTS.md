@@ -21,18 +21,17 @@ degrades.
 
 ## Documentation
 
-Read the README for whichever half you are changing before changing it. Each is
-the single source of truth for its own side, and both record *why* rather than
-just what.
+Read the docs for whichever part you are changing before changing it. Each file
+below is the single source of truth for its own scope, and they are written not
+to overlap. All of them record *why* rather than just what.
 
 | File | Authoritative for |
 |---|---|
-| `src/backend/README.md` | The server: scope, auth, schema, sync design, deployment, what is left. |
+| `README.md` | Orientation: what this is, how to run it, where everything lives. |
+| `docs/architecture.md` | What spans both halves: the data stores, the lifecycles, the sync contract, the auth chain, the failure behaviour. |
+| `docs/decisions/` | Why the central decisions were made, and what each one costs. One record per decision. |
+| `src/backend/README.md` | The server: scope, auth, schema, deployment, what is left. |
 | `src/frontend/README.md` | The front end: how to run it, what is built, storage and sync, the dex data, the three seams, the design tokens. |
-
-There is no separate planning document. An earlier `prompts/` directory held
-one, and it drifted out of agreement with the code — the READMEs replaced it so
-that there is only one place to be wrong.
 
 ## Commands
 
@@ -54,37 +53,20 @@ docker compose down -v   # wipe the database, replay migrations from V1
 
 ## Decisions that are settled
 
-Do not undo these without being asked. Each cost something to arrive at.
+Documented in `docs/decisions/`, one record each with the reasoning and the
+cost. **Do not undo one without being asked.** If you are told to, add a new
+record superseding it rather than editing the old one.
 
-- **Local-first.** The app must work fully offline, with no account and no
-  server. An account is an upgrade for durability, never a gate.
-- **The front end reaches the API same-origin, on relative paths only.** A Vite
-  proxy in development, a Vercel rewrite in production. There is no API base
-  URL, no `VITE_` variable for one, and **no CORS configuration anywhere** —
-  that is what makes the auth cookie first-party. Adding a base URL breaks the
-  auth design, not just the config.
-- **Auth is a JWT in an httpOnly cookie.** JavaScript cannot read it and must
-  not try. Every API call needs `credentials: 'include'`, which
-  `src/frontend/src/lib/api.ts` sets in exactly one place.
-- **`src/frontend/src/lib/api.ts` is the only module that calls `fetch`.**
-- **The dex data is bundled, not fetched.** A released dex never changes, so
-  there is nothing to sync. `paldea.ts` is generated and committed.
-- **`src/frontend/tools/generate-dex.ts` is run by hand**, never in a build or
-  on a schedule.
-- **`src/frontend/src/storage/progress.ts` is the only module that touches
-  `localStorage`**, and the only one that mirrors progress to the server. It
-  holds the settings as well as the progress. Keep it that way: nothing above it
-  knows that a server exists.
-- **`src/frontend/src/lib/sprites.ts` is the only place a sprite URL is built.**
-  The data file stores a numeric `spriteId` and no URLs.
-- **No component library, no state manager, no CSS framework.** Plain CSS with
-  custom properties and CSS Modules. This is deliberate.
-- **Progress is stored as a sparse list of national dex numbers**, keyed by
-  game then dex. Not the regional number — those are not stable across games.
-  The server stores that same list wholesale, in one `integer[]` column.
-- **Persisted state is versioned and validated on read.** `schemaVersion`, a
-  fallback to empty rather than a guess, and no path where a corrupt or blocked
-  `localStorage` can take the page down.
+Read the index first — `docs/decisions/README.md` — and then the records that
+touch what you are changing. The ones most often breached by accident:
+
+- **Same-origin API on relative paths only** (`0002`). Adding an API base URL
+  breaks the auth design, not just the config.
+- **One module in front of each boundary** (`0006`). A `fetch` outside
+  `lib/api.ts`, or a `localStorage` call outside `storage/progress.ts`, is a
+  defect even if it works.
+- **The device owns the dex** (`0001`). Nothing may become a reason the app
+  stops working offline or without an account.
 
 ## Traps that have already bitten
 
@@ -125,6 +107,49 @@ Documented so they are not rediscovered the hard way.
   that just sent it.
 - **The merge reads storage after its request returns**, so a mark made during a
   20-second cold start ends up in the union instead of being overwritten by it.
+- **The account plate is positioned against the viewport, and only because
+  nothing above it is positioned.** Adding `position` to `.page` in
+  `App.module.css` moves it into the 900px column without any error. Its height
+  and the page's top padding are both `--s5` on purpose: that is what keeps it
+  off the header at every width, in place of a media query.
+- **The phone's dock and the toolbar hold duplicate controls on purpose.**
+  Search and the status segments exist in both `Toolbar` and `Dock`, hidden by a
+  media query at 620px, and both read the same filter state. Deleting either
+  copy or trying to render one conditionally reintroduces a layout jump and a
+  breakpoint in JavaScript.
+- **The page's bottom padding is the dock's height with search open**, not
+  closed. Shrink it to the closed height and entry 400 hides behind the bar the
+  moment someone opens search on an unfiltered list.
+- **A text field under 16px makes iOS Safari zoom the page in on focus**, and it
+  never zooms back out. `--text-field` is that 16px, it is not a step on the
+  type scale, and "tidying" the dock's field or the dialog's mobile inputs back
+  to `--text-sm` brings the bug straight back.
+- **The dock's close slot calls `preventDefault` on `mousedown`.** Focus moving
+  to the button blurs the field, the empty-field rule collapses the strip, and
+  the click then arrives at a button that is the lens again — closing search
+  reopened it. The blur-collapse and the toggle cannot both act on one press.
+- **The dock's search focuses via `flushSync` inside the click handler.** iOS
+  opens the keyboard only for a `focus()` that happened during the gesture, so
+  moving that back into an effect leaves the field open with no keyboard.
+- **`viewport-fit=cover` in `index.html` is what makes `env(safe-area-inset-*)`
+  non-zero.** Without it the dock's face sits under the home indicator.
+  `interactive-widget=resizes-content` beside it is what keeps the dock above
+  the on-screen keyboard — on Chrome. iOS ignores it.
+- **`position: fixed` does not mean "the bottom of the screen" on a phone.** It
+  pins to the layout viewport, which the browser's own bar and the keyboard sit
+  over, and iOS moves the visual viewport during a scroll without moving fixed
+  elements. `Dock` tracks `visualViewport` and translates itself by the covered
+  amount. Deleting that effect brings back both the drift on scroll and the bar
+  hiding under the keyboard.
+- **"Cursor" means two unrelated things.** `hooks/useCursor` is the keyboard
+  position over the list. The `--cursor-wait-*` tokens are the mouse pointer
+  while an auth request is out. Neither is the other.
+- **The waiting pointer's frame is written onto the element, not held in
+  state.** A cold start runs for a minute at twelve frames a second, and that is
+  750 re-renders of a form to move a cursor.
+- **The wording of the waking notice belongs to the front end.**
+  `src/backend/README.md` quotes it and says so. Change it in
+  `components/AuthDialog.tsx`, then make both READMEs agree.
 
 ## Conventions
 
