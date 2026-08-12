@@ -31,6 +31,13 @@ export class ApiError extends Error {
 const JSON_HEADERS = { 'Content-Type': 'application/json' }
 
 /**
+ * The one path here that needs no cookie. A 401 from it means the proxy or the
+ * rewrite is wrong — actuator sits at the server root, not under `/api` — and
+ * says nothing whatever about the session, so it must not end one.
+ */
+const HEALTH_PATH = '/api/actuator/health'
+
+/**
  * Every error the API produces is `{ message }`, whatever raised it. A 502 from
  * the host while the container restarts is not, so parsing is allowed to fail.
  */
@@ -47,13 +54,62 @@ async function errorMessage(response: Response): Promise<string> {
   return 'Something went wrong. Please try again.'
 }
 
+/**
+ * Whether we believe a session exists. Set by the calls that create or confirm
+ * one, cleared the moment the server disagrees.
+ *
+ * Without it, the 401 that `me()` answers with when nobody is signed in would
+ * be indistinguishable from a session being rejected — and only the second is
+ * worth telling anyone about.
+ */
+let hasSession = false
+
+/**
+ * Bumped every time the session changes identity, and captured by each request
+ * as it goes out.
+ *
+ * A cold start keeps a request in flight for half a minute, so the `/api/me`
+ * fired on page load can still be outstanding when someone signs in. It was
+ * sent without a cookie, so it answers 401 — and without this that stale answer
+ * would look exactly like the new session being rejected.
+ */
+let sessionEpoch = 0
+
+let sessionLost: (() => void) | undefined
+
+/**
+ * Notified when the server rejects a request we believed was authenticated.
+ *
+ * This is the only place that can notice: it is the only module that sees a
+ * response. A 401 here means the cookie is gone, expired, or was never kept, so
+ * whatever the UI is showing about being signed in has stopped being true.
+ */
+export function setSessionLostHandler(handler: () => void): void {
+  sessionLost = handler
+}
+
 async function send(path: string, init?: RequestInit): Promise<Response> {
+  const epoch = sessionEpoch
+
   const response = await fetch(path, {
     ...init,
     // The JWT is in an httpOnly cookie, which fetch omits by default. Without
     // this every authenticated call is a 401 and nothing says why.
     credentials: 'include',
   })
+
+  // Only a request that belonged to the session still running can report it
+  // lost. One issued before the current sign-in was answering a different
+  // question, and its 401 says nothing about this session.
+  if (
+    response.status === 401 &&
+    hasSession &&
+    epoch === sessionEpoch &&
+    path !== HEALTH_PATH
+  ) {
+    hasSession = false
+    sessionLost?.()
+  }
 
   if (!response.ok) throw new ApiError(response.status, await errorMessage(response))
   return response
@@ -65,6 +121,8 @@ export async function register(email: string, password: string): Promise<User> {
     headers: JSON_HEADERS,
     body: JSON.stringify({ email, password }),
   })
+  hasSession = true
+  sessionEpoch += 1
   return response.json()
 }
 
@@ -74,17 +132,25 @@ export async function login(email: string, password: string): Promise<User> {
     headers: JSON_HEADERS,
     body: JSON.stringify({ email, password }),
   })
+  hasSession = true
+  sessionEpoch += 1
   return response.json()
 }
 
 export async function logout(): Promise<void> {
+  // After the response, not before. A logout that fails leaves the cookie
+  // working and the user signed in, and clearing this first would mean a later,
+  // genuine rejection went unnoticed — the silence this all started with.
   await send('/api/auth/logout', { method: 'POST' })
+  hasSession = false
+  sessionEpoch += 1
 }
 
 /** The signed-in account, or null when there is no valid cookie. */
 export async function me(): Promise<User | null> {
   try {
     const response = await send('/api/me')
+    hasSession = true
     return await response.json()
   } catch (error) {
     // No cookie is an answer, not a failure. Only the network reaching nobody
@@ -130,7 +196,7 @@ export async function putProgress(
  */
 export async function wake(): Promise<void> {
   try {
-    await send('/api/actuator/health')
+    await send(HEALTH_PATH)
   } catch {
     // Offline, or the host is down. Neither is worth interrupting anyone for:
     // the dex works without a server, and login explains itself if it fails.
