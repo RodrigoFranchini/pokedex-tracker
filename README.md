@@ -26,8 +26,6 @@ reality. Building it was the easy half. The other half was:
 - a free-tier back end that falls asleep and takes 20 seconds to wake up
 - a cookie that must be same-origin or the whole auth design collapses
 - a database in one country, an API in another, a CDN in a third
-- the health endpoint that isn't where you'd think it is (`/actuator/health`,
-  not under `/api`, and it cost more debugging than it should have)
 
 Everything past the first commit was an argument with production. The app is the
 excuse; the deploy is the point. Also I genuinely wanted to finish the dex, which I did! check: // TODO: Add the Pokédex completion certificate image.
