@@ -39,8 +39,8 @@ sleeping server is invisible to someone using the app.
 
 ## 2. Status
 
-All six endpoints work end to end. What is left is putting it somewhere the
-front end can reach.
+All six endpoints work end to end, deployed, with the front end talking to
+them.
 
 | Piece | State |
 | --- | --- |
@@ -49,8 +49,8 @@ front end can reach.
 | Progress: `GET` and `PUT` | Done |
 | Database on Neon | Done |
 | Container, verified against Neon | Done |
-| Deployment to Render, and the Vercel proxy | In progress |
-| Front-end sync | Not started |
+| Deployment to Render, and the Vercel proxy | Done |
+| Front-end sync | Done |
 
 Build order, deliberately: users → progress → **deploy** → front end. Deploying
 while there are three endpoints is much easier than deploying later with more
@@ -346,7 +346,7 @@ account. That progress must not be thrown away.
 
 On the front end, `src/frontend/src/storage/progress.ts` is the seam this plugs
 into — it is the only module that touches `localStorage`, and it was built to
-become an API client. One file changes.
+become an API client. That is where it happened, and only there.
 
 ---
 
@@ -538,8 +538,5 @@ enough that most Boot 3 answers online need adapting.
 
 ## 12. Not built yet
 
-- **Deployment** to Render and Neon, with the Vercel rewrite (§8).
-- **Front-end sync** — swapping `storage/progress.ts` for an API-backed version
-  with the union-on-login from §7.
 - **springdoc-openapi**, planned for Swagger UI. Check its Boot 4 compatibility
   before adding it.

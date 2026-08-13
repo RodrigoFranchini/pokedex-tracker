@@ -36,7 +36,7 @@ Three properties hold this together, and each has its own decision record:
 
 - The browser reaches the API on **relative paths only**, so the API is always
   same-origin and the auth cookie is always first-party. A Vite proxy does this
-  in development, a Vercel rewrite will do it in production. There is no base
+  in development, a Vercel rewrite does it in production. There is no base
   URL and no CORS anywhere.
   ([0002](decisions/0002-same-origin-cookie-auth.md))
 - **The device is the source of truth.** The server holds a copy.
@@ -282,5 +282,3 @@ decision records; this is the list.
   the device last synced as. ([0004](decisions/0004-progress-ownership.md))
 - **One game and one dex ship.** The storage shape, the URL shape and the
   primary key are all keyed by (game, dex) and ready; only `paldea` has data.
-- **The front end is not deployed.** The production rewrite that makes `/api`
-  same-origin is designed but not yet in place.

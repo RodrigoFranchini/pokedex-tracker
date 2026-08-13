@@ -70,8 +70,13 @@ else running locally. `npm run preview` does too — Vite's preview server falls
 back to `server.proxy` — so it is not a way to check the no-server behaviour.
 Serve `dist/` with any plain static server for that.
 
-One caveat: the cookie is `Secure`, which Chrome and Firefox accept over
-`http://localhost` and Safari historically does not.
+The deployed server sends a `Secure` cookie, which no browser keeps over the
+dev server's plain `http` — Safari drops it outright, and nothing keeps it on a
+LAN address. The proxy strips that one attribute on the way through, alongside
+the two corrections above; see
+[`../../docs/decisions/0008-dev-proxy-strips-secure.md`](../../docs/decisions/0008-dev-proxy-strips-secure.md).
+The trade is that a real session cookie travels in clear text on the LAN, so
+sign in with an account you would not mind losing.
 
 ---
 
@@ -572,8 +577,6 @@ an accident of scope.
 
 ## 9. Not built
 
-- **Deployment.** The front end is not on Vercel yet. That needs the two
-  rewrites in §1 and nothing else — there is no build configuration to add.
 - **Password reset.** There is no email provider, so a forgotten password is a
   database statement. `src/backend/README.md` says what it would take.
 - **Per-entry merge**, which is what would fix the unmark case in §4.
