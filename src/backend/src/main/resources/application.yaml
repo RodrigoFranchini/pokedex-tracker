@@ -28,7 +28,12 @@ app:
   auth:
     # Dev fallback only. Production sets JWT_SECRET, and rotating it logs
     # everyone out, which is the intended way to revoke every session.
-    jwt-secret: ${JWT_SECRET:local-development-secret-not-for-production-use-min-32-bytes}
+    #
+    # At least 64 bytes, here and in production. jjwt derives the algorithm from
+    # the key's length, so a shorter secret does not fail -- it quietly signs
+    # with HS384 instead, and development stops exercising the algorithm
+    # production actually uses. This fallback was 60 bytes and did exactly that.
+    jwt-secret: ${JWT_SECRET:local-development-secret-not-for-production-use-min-64-bytes-long}
     token-expiry: 7d
     # Secure cookies are not sent over plain http, so local dev would never
     # receive one. Production sets this true.

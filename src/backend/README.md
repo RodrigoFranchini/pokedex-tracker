@@ -103,7 +103,7 @@ takes them as shell exports.
 
 | Variable | Default | Notes |
 | --- | --- | --- |
-| `JWT_SECRET` | a local dev string | At least 48 bytes: tokens are signed HS384, and a shorter key is rejected outright. Changing it invalidates every session at once, which is the only global revocation this design has. |
+| `JWT_SECRET` | a local dev string | At least 64 bytes: tokens are signed HS512, and a shorter key is rejected outright. Changing it invalidates every session at once, which is the only global revocation this design has. |
 | `COOKIE_SECURE` | `false` | Must be `true` in production. Browsers will not send a `Secure` cookie over plain HTTP, so leaving it on locally means never receiving one. |
 | `SPRING_DATASOURCE_URL` | from compose | Production only. `jdbc:` prefixed, unlike the string Neon hands you. |
 | `SPRING_DATASOURCE_USERNAME` | from compose | Production only. |
