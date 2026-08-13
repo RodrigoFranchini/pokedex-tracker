@@ -1,0 +1,11 @@
+# Repo-wide junk only. Each stack keeps its own ignores next to the tool that
+# generates them -- src/frontend for Vite's build output, src/backend for
+# Maven's -- so those stay regenerable and can't reach across into each other.
+
+# macOS
+.DS_Store
+
+# Editors
+.idea/
+.vscode/*
+!.vscode/extensions.json
