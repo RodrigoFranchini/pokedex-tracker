@@ -8,7 +8,7 @@ second.
 
 | Part | State |
 |---|---|
-| **Front end** (`src/frontend`) | **Built and working**, including accounts and sync. Not deployed. |
+| **Front end** (`src/frontend`) | **Deployed** to Vercel at `pokedex-tracker-eight.vercel.app`, including accounts and sync. |
 | **Back end** (`src/backend`) | **Deployed** to Render, with Postgres on Neon. All six endpoints verified live. |
 
 The front end still runs with **no server at all** — progress lives in
