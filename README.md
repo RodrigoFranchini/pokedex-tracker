@@ -60,7 +60,7 @@ aspiration.
 
 ## About the AI in the room
 
-This was built with heavy AI assistance, and pretending otherwise would be
+This was built with AI assistance, and pretending otherwise would be
 strange in a repo that ships an [`AGENTS.md`](AGENTS.md) at the root — 160 lines
 of "here is how this codebase works, please stop guessing."
 
