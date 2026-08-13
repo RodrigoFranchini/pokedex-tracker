@@ -153,14 +153,19 @@ export function Dock({
             aria-label={user ? `Account, signed in as ${user.email}` : 'Log in'}
             onClick={onOpenAccount}
           >
-            {/* A notched card, and filled when you are signed in: empty outline
-                against solid is how this page already says caught or not. */}
+            {/* Head and shoulders — the one account glyph every user already
+                reads as "sign in". Drawn square-on, at the same 2px weight as
+                the lens beside it, so it stays part of this page rather than a
+                borrowed icon; the plate around it carries the notch. Filled
+                when you are signed in: empty outline against solid is how this
+                page already says caught or not. */}
             <svg
               className={`${styles.glyph} ${user ? styles.glyphFilled : ''}`}
               viewBox="0 0 16 16"
               aria-hidden="true"
             >
-              <path d="M2 4H10L14 8V12H2Z" />
+              <path d="M5.5 1.5H10.5V6.5H5.5Z" />
+              <path d="M5 9.5H11L14 14H2Z" />
             </svg>
           </button>
         </div>
