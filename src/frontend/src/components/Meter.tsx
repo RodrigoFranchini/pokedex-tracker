@@ -23,7 +23,10 @@ function MeterComponent({ entries, caught, onSeek }: Props) {
 
   return (
     <div
-      className={styles.meter}
+      // A full meter is already the trophy; the sweep is only there to say the
+      // last segment landed. It replays on reload, which is the price of
+      // holding no "already celebrated" state anywhere.
+      className={`${styles.meter} ${done === total ? styles.complete : ''}`}
       role="progressbar"
       aria-valuenow={done}
       aria-valuemin={0}

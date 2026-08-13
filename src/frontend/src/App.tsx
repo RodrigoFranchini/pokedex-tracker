@@ -134,6 +134,10 @@ export default function App() {
                 ? 'A Pokemon has at most two types, so more than two selected can never match.'
                 : undefined
             }
+            // Only the finished dex, and only under the filter that asks what
+            // is left. An empty result with any of the 400 still uncaught is a
+            // filter that matched nothing, and gets told so.
+            complete={count === PALDEA_DEX.length && filters.status === 'missing'}
             onToggle={handleToggle}
             onFocusRow={cursor.setIndex}
             onClearFilters={filters.clear}

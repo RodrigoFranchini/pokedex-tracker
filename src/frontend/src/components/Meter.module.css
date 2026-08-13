@@ -41,6 +41,36 @@
 }
 
 /*
+ * One pass of light across a finished meter. It runs once and leaves nothing
+ * behind — the bar it sweeps is already fully amber, which is the actual
+ * statement; this only points at it.
+ *
+ * The global reduced-motion rule collapses the duration, and since the sweep
+ * ends off-screen either way, nothing is lost by it not being seen.
+ */
+.complete::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  background: linear-gradient(
+    90deg,
+    transparent 0 35%,
+    rgb(255 255 255 / 55%) 50%,
+    transparent 65% 100%
+  );
+  transform: translateX(-100%);
+  animation: sweep 1.1s ease-out;
+}
+
+@keyframes sweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/*
  * A marker every 50 entries. Without them the meter reads as a bar; with them
  * you can find roughly where #250 is, which is what makes it navigable.
  */

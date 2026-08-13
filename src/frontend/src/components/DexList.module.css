@@ -28,6 +28,18 @@
   font-size: var(--text-sm);
 }
 
+/* The one line that is an achievement rather than an explanation, so it gets
+   full ink and weight instead of the muted empty-state grey.
+   Not amber: that colour is legible on the ground, where every other amber on
+   the page sits, but on the panel it is pale-on-pale and stops being readable
+   at all. Size and weight carry the emphasis here instead. */
+.emptyDone {
+  color: var(--ink);
+  font-size: var(--text-md);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
 .clear {
   padding: var(--s1) var(--s2);
   background: var(--ink);

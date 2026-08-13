@@ -61,8 +61,12 @@ export function Header({
 
       {/* No percentage: the meter already shows the proportion and the count
           shows the number, so a third reading of the same fact would only add
-          the oddity of "1 / 400" sitting next to "0%". */}
-      <p className={styles.count}>
+          the oddity of "1 / 400" sitting next to "0%".
+
+          At 400 / 400 the count takes the amber plate the sound toggle uses
+          when it is on — the page already says "this is the state you want" in
+          exactly that way, and it costs no extra words. */}
+      <p className={`${styles.count} ${caught === total ? styles.countDone : ''}`}>
         <span className={styles.done}>{caught}</span>
         <span className={styles.total}> / {total}</span>
       </p>

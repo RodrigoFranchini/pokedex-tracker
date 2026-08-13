@@ -71,6 +71,32 @@
   font-weight: 700;
 }
 
+/*
+ * Finished: the number stops being a reading and becomes a badge. Amber was
+ * already the "your progress" colour, so filling with it rather than writing
+ * in it is the smallest possible way to say the reading is done.
+ */
+.countDone {
+  padding: 0 var(--s1);
+  background: var(--amber);
+
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--notch-sm)) 0,
+    100% var(--notch-sm),
+    100% 100%,
+    0 100%
+  );
+}
+
+.countDone .done {
+  color: var(--ink);
+}
+
+.countDone .total {
+  color: rgb(0 0 0 / 55%);
+}
+
 .total {
   color: rgb(237 235 243 / 55%);
   font-size: var(--text-md);
